@@ -2,6 +2,8 @@
 *.csproj.user
 *.config
 *.vsmdi
+StyleCop.Cache
+testimpactdata.sdf
 bin/
 obj/
 TestResults/

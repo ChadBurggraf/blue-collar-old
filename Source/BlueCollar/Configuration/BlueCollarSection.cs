@@ -14,14 +14,14 @@ namespace BlueCollar.Configuration
     /// </summary>
     public class BlueCollarSection : ConfigurationSection
     {
-        private static BlueCollarSection section = (BlueCollarSection)(ConfigurationManager.GetSection("blueCollar") ?? new BlueCollarSection());
+        private static BlueCollarSection current = (BlueCollarSection)(ConfigurationManager.GetSection("blueCollar") ?? new BlueCollarSection());
 
         /// <summary>
         /// Gets the currently configured <see cref="BlueCollarSection"/>.
         /// </summary>
         public static BlueCollarSection Current
         {
-            get { return section; }
+            get { return current; }
         }
 
         /// <summary>

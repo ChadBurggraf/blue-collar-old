@@ -35,9 +35,11 @@
   <ItemGroup>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDependentAssemblyPaths Condition=" '$(VS100COMNTOOLS)' != '' " Include="$(VS100COMNTOOLS)..\IDE\PrivateAssemblies">
@@ -48,7 +50,21 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="JobStoreTestBase.cs" />
+    <Compile Include="JobTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RunningJobsTests.cs" />
+    <Compile Include="TestJobs\TestIdJob.cs" />
+    <Compile Include="TestJobs\TestQuickJob.cs" />
+    <Compile Include="TestJobs\TestScheduledJob.cs" />
+    <Compile Include="TestJobs\TestSlowJob.cs" />
+    <Compile Include="TestJobs\TestTimeoutJob.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
+      <Project>{C648543C-C912-4F37-8CA5-F1D5E095B51F}</Project>
+      <Name>BlueCollar</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
