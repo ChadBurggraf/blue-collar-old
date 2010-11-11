@@ -5,7 +5,7 @@ CREATE TABLE [BlueCollar]
 (
 	[Id] int NOT NULL IDENTITY(1, 1),
 	[Name] varchar(128) NOT NULL,
-	[Type] varchar(512) NOT NULL,
+	[JobType] varchar(512) NOT NULL,
 	[Data] xml NOT NULL,
 	[Status] varchar(24) NOT NULL,
 	[Exception] xml NULL,
@@ -13,7 +13,7 @@ CREATE TABLE [BlueCollar]
 	[StartDate] datetime NULL,
 	[FinishDate] datetime NULL,
 	[ScheduleName] varchar(128) NULL,
-	[TryNumber] bit NOT NULL,
+	[TryNumber] int NOT NULL,
 	CONSTRAINT [PK_BlueCollar] PRIMARY KEY CLUSTERED ([Id] ASC)
 	WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
@@ -26,7 +26,7 @@ CREATE NONCLUSTERED INDEX [IX_BlueCollar_QueueDate_Status] ON [BlueCollar]
 ( 
 	[Id],
 	[Name],
-	[Type],
+	[JobType],
 	[Data],
 	[Exception],
 	[StartDate],

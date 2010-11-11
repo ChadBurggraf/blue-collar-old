@@ -71,6 +71,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ScheduledJob.cs" />
+    <Compile Include="SqlJobStore.cs" />
+    <Compile Include="SqlJobStoreTransaction.cs" />
+    <Compile Include="SqlServerJobStore.cs" />
     <Compile Include="Strings.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

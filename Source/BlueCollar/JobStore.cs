@@ -32,12 +32,7 @@ namespace BlueCollar
             {
                 lock (locker)
                 {
-                    if (current == null)
-                    {
-                        current = (IJobStore)Activator.CreateInstance(Type.GetType(BlueCollarSection.Current.Store.JobStoreType));
-                    }
-
-                    return current;
+                    return current ?? (current = Create());
                 }
             }
         }
@@ -61,6 +56,37 @@ namespace BlueCollar
                     return this.typeName;
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="IJobStore"/> instance.
+        /// </summary>
+        /// <returns>The created <see cref="IJobStore"/>.</returns>
+        public static IJobStore Create()
+        {
+            return Create(BlueCollarSection.Current.Store);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="IJobStore"/> instance.
+        /// </summary>
+        /// <param name="element">The configuration element to create the instance from.</param>
+        /// <returns>The created <see cref="IJobStore"/>.</returns>
+        public static IJobStore Create(JobStoreElement element)
+        {
+            IJobStore store = null;
+
+            if (element != null && !String.IsNullOrEmpty(element.JobStoreType))
+            {
+                store = (IJobStore)Activator.CreateInstance(Type.GetType(element.JobStoreType));
+            }
+            else
+            {
+                // TODO: SQLite job store.
+            }
+
+            store.Initialize(element);
+            return store;
         }
 
         /// <summary>
@@ -234,6 +260,14 @@ namespace BlueCollar
         /// <param name="transaction">The transaction to execute the command in.</param>
         /// <returns>A collection of recently scheduled jobs.</returns>
         public abstract IEnumerable<JobRecord> GetLatestScheduledJobs(IEnumerable<string> scheduleNames, IJobStoreTransaction transaction);
+
+        /// <summary>
+        /// Initializes the job store from the given configuration element.
+        /// </summary>
+        /// <param name="element">The configuration element to initialize the job store from.</param>
+        public virtual void Initialize(JobStoreElement element)
+        {
+        }
 
         /// <summary>
         /// Saves the given job record, either creating it or updating it.

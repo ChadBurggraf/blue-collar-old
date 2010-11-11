@@ -18,7 +18,7 @@ namespace BlueCollar.Test
     public abstract class JobStoreTestBase
     {
         /// <summary>
-        /// Initializes a new instance of the JobStoreTestsBase class.
+        /// Initializes a new instance of the JobStoreTestBase class.
         /// </summary>
         /// <param name="store">The store to use for the tests.</param>
         protected JobStoreTestBase(IJobStore store)
@@ -109,10 +109,8 @@ namespace BlueCollar.Test
         {
             if (this.Store != null)
             {
-                throw new NotImplementedException();
-                //JobRunner.GetInstance(this.Store).Stop(true);
-
-                /*string a = Guid.NewGuid().ToString();
+                // JobRunner.GetInstance(this.Store).Stop(true);
+                string a = Guid.NewGuid().ToString();
                 string b = Guid.NewGuid().ToString();
                 string c = Guid.NewGuid().ToString();
                 string d = Guid.NewGuid().ToString();
@@ -129,7 +127,7 @@ namespace BlueCollar.Test
 
                 var timeoutC1 = this.CreateAndSaveScheduledSucceeded(new TestTimeoutJob(), DateTime.Parse("2/3/10"), c).Id.Value;
 
-                var latest = Store.GetLatestScheduledJobs(new string[] { a, b, c, d });
+                var latest = this.Store.GetLatestScheduledJobs(new string[] { a, b, c, d });
 
                 string idJobType = JobRecord.JobTypeString(typeof(TestIdJob));
                 string slowJobType = JobRecord.JobTypeString(typeof(TestSlowJob));
@@ -137,7 +135,7 @@ namespace BlueCollar.Test
                 Assert.AreEqual(idA3, latest.Where(r => r.ScheduleName == a && r.JobType == idJobType).FirstOrDefault().Id);
                 Assert.AreEqual(slowA2, latest.Where(r => r.ScheduleName == a && r.JobType == slowJobType).FirstOrDefault().Id);
                 Assert.AreEqual(slowB2, latest.Where(r => r.ScheduleName == b).FirstOrDefault().Id);
-                Assert.AreEqual(timeoutC1, latest.Where(r => r.ScheduleName == c).FirstOrDefault().Id);*/
+                Assert.AreEqual(timeoutC1, latest.Where(r => r.ScheduleName == c).FirstOrDefault().Id);
             }
         }
 

@@ -8,6 +8,7 @@ namespace BlueCollar
 {
     using System;
     using System.Collections.Generic;
+    using BlueCollar.Configuration;
 
     /// <summary>
     /// Defines the interface for persistent job stores.
@@ -144,6 +145,12 @@ namespace BlueCollar
         /// <param name="transaction">The transaction to execute the command in.</param>
         /// <returns>A collection of recently scheduled jobs.</returns>
         IEnumerable<JobRecord> GetLatestScheduledJobs(IEnumerable<string> scheduleNames, IJobStoreTransaction transaction);
+
+        /// <summary>
+        /// Initializes the job store from the given configuration element.
+        /// </summary>
+        /// <param name="element">The configuration element to initialize the job store from.</param>
+        void Initialize(JobStoreElement element);
 
         /// <summary>
         /// Saves the given job record, either creating it or updating it.

@@ -7,6 +7,7 @@
 namespace BlueCollar
 {
     using System;
+    using System.Configuration;
     using System.Security.Cryptography;
     using System.Text;
 
@@ -15,6 +16,39 @@ namespace BlueCollar
     /// </summary>
     public static class Strings
     {
+        /// <summary>
+        /// Gets the configured connection string identified in the given metadata collection
+        /// by a key of "ConnectionStringName", defaulting to "LocalSqlServer" if nothing is found.
+        /// </summary>
+        /// <param name="metadata">The metadata collection identifying the connection string to get.</param>
+        /// <returns>A connection string, or <see cref="String.Empty"/> if none was found.</returns>
+        public static string ConfiguredConnectionString(KeyValueConfigurationCollection metadata)
+        {
+            var keyValue = metadata["ConnectionStringName"];
+            return ConfiguredConnectionString(keyValue != null ? keyValue.Value : null);
+        }
+
+        /// <summary>
+        /// Gets the configured connection string with the given name, defaulting to "LocalSqlServer" if
+        /// the given name is empty.
+        /// </summary>
+        /// <param name="connectionStringName">The name of the connection string to get.</param>
+        /// <returns>A connection string, or <see cref="String.Empty"/> if none was found.</returns>
+        public static string ConfiguredConnectionString(string connectionStringName)
+        {
+            connectionStringName = !String.IsNullOrEmpty(connectionStringName) ? connectionStringName : "LocalSqlServer";
+            var connectionString = ConfigurationManager.ConnectionStrings[connectionStringName];
+
+            if (connectionString != null)
+            {
+                return connectionString.ConnectionString;
+            }
+            else
+            {
+                return ConfigurationManager.AppSettings[connectionStringName];
+            }
+        }
+
         /// <summary>
         /// Computes the SHA1 hash of the string.
         /// </summary>
