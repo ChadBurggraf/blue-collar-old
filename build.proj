@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <CommonDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Common</CommonDir>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <ConsoleDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Console</ConsoleDir>
+    <LibraryDir>$(MSBuildProjectDirectory)\Source\BlueCollar</LibraryDir>
+    <ServiceDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Service</ServiceDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectsToBuild Include="$(CommonDir)\BlueCollar.Common.csproj"/>
+    <ProjectsToBuild Include="$(LibraryDir)\BlueCollar.csproj"/>
+    <ProjectsToBuild Include="$(ConsoleDir)\BlueCollar.Console.csproj"/>
+    <ProjectsToBuild Include="$(ServiceDir)\BlueCollar.Service.csproj"/>
+  </ItemGroup>
+  
+  <Target Name="Build">
+    <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration)"/>
+  </Target>
+</Project>

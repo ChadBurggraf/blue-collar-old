@@ -1,0 +1,7 @@
+*.suo
+*.csproj.user
+*.config
+*.vsmdi
+bin/
+obj/
+TestResults/
