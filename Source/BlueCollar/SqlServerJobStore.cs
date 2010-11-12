@@ -44,12 +44,14 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Creates a connection to the SQL job store.
+        /// Creates and opens a connection to the SQL job store.
         /// </summary>
         /// <returns>The created connection.</returns>
-        protected override DbConnection CreateConnection()
+        protected override DbConnection CreateAndOpenConnection()
         {
-            return new SqlConnection(this.ConnectionString);
+            SqlConnection connection = new SqlConnection(this.ConnectionString);
+            connection.Open();
+            return connection;
         }
 
         /// <summary>
@@ -58,14 +60,16 @@ namespace BlueCollar
         /// <param name="connection">The connection to create the command with.</param>
         /// <param name="status">The job status to filter results on.</param>
         /// <param name="count">The maximum number of results to select.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <returns>A select command.</returns>
-        protected override DbCommand CreateSelectCommand(DbConnection connection, JobStatus status, int count)
+        protected override DbCommand CreateSelectCommand(DbConnection connection, JobStatus status, int count, DateTime before)
         {
-            const string SqlStart = "SELECT{0} * FROM {1} WHERE {2} = {3} ORDER BY {4};";
+            const string SqlStart = "SELECT{0} * FROM {1} WHERE {2} = {3} AND {4} < {5} ORDER BY {4};";
             
             DbCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Status"), status.ToString()));
+            command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Before"), before));
 
             string countString = String.Empty;
 
@@ -82,7 +86,8 @@ namespace BlueCollar
                 this.TableName,
                 this.ColumnName("Status"),
                 this.ParameterName("Status"),
-                this.ColumnName("QueueDate"));
+                this.ColumnName("QueueDate"),
+                this.ParameterName("Before"));
 
             return command;
         }
@@ -113,9 +118,10 @@ namespace BlueCollar
                 pageSize = 0;
             }
 
-            SqlCommand command = ((SqlConnection)connection).CreateCommand();
+            DbCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-
+            command.Parameters.Add(this.ParameterWithValue(ParameterName("Name"), String.Concat("%", (likeName ?? String.Empty).Trim(), "%")));
+            
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat(
                 CultureInfo.InvariantCulture,
@@ -139,12 +145,10 @@ namespace BlueCollar
                 command.Parameters.Add(this.ParameterWithValue(ParameterName("ScheduleName"), withStatus.Value.ToString()));
             }
 
-            sb.AppendFormat(CultureInfo.InvariantCulture, ") t WHERE {0} > {1} AND {0} <= {2}", ColumnName("RowNumber"), ParameterName("SkipFrom"), ParameterName("SkipTo"));
+            sb.AppendFormat(CultureInfo.InvariantCulture, ") t WHERE {0} > {1} AND {0} <= {2};", ColumnName("RowNumber"), ParameterName("SkipFrom"), ParameterName("SkipTo"));
             command.CommandText = sb.ToString();
 
             int skipFrom = (pageNumber - 1) * pageSize;
-
-            command.Parameters.Add(this.ParameterWithValue(ParameterName("Name"), String.Concat("%", (likeName ?? String.Empty).Trim(), "%")));
             command.Parameters.Add(this.ParameterWithValue(ParameterName("SkipFrom"), skipFrom));
             command.Parameters.Add(this.ParameterWithValue(ParameterName("SkipTo"), skipFrom + pageSize));
 

@@ -31,9 +31,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mono.Security">
+      <HintPath>..\..\Lib\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Npgsql">
+      <HintPath>..\..\Lib\Npgsql.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite, Version=1.0.66.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -52,6 +62,7 @@
     <Compile Include="Configuration\JobScheduleElement.cs" />
     <Compile Include="Configuration\JobScheduleElementCollection.cs" />
     <Compile Include="Configuration\JobStoreElement.cs" />
+    <Compile Include="ExceptionXElement.cs" />
     <Compile Include="IJob.cs" />
     <Compile Include="IJobStore.cs" />
     <Compile Include="IJobStoreTransaction.cs" />
@@ -62,19 +73,32 @@
     <Compile Include="JobRecordResultsOrderBy.cs" />
     <Compile Include="JobRun.cs" />
     <Compile Include="JobRunEventArgs.cs" />
+    <Compile Include="JobRunner.cs" />
     <Compile Include="JobStatus.cs" />
     <Compile Include="JobStore.cs" />
+    <Compile Include="MemoryJobStore.cs" />
     <Compile Include="NameValueCollections.cs" />
     <Compile Include="Objects.cs" />
+    <Compile Include="PostgresJobStore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RunningJobs.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ScheduledJob.cs" />
+    <Compile Include="ScheduledJobTuple.cs" />
+    <Compile Include="SQLiteJobStore.cs" />
     <Compile Include="SqlJobStore.cs" />
     <Compile Include="SqlJobStoreTransaction.cs" />
     <Compile Include="SqlServerJobStore.cs" />
     <Compile Include="Strings.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="BlueCollar.s3db" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sql\BlueCollar-Postgres.sql" />
+    <EmbeddedResource Include="Sql\BlueCollar-SQLite.sql" />
+    <EmbeddedResource Include="Sql\BlueCollar-SqlServer.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -20,10 +20,16 @@ namespace BlueCollar
         /// <summary>
         /// Initializes a new instance of the SqlJobStoreTransaction class.
         /// </summary>
+        /// <param name="jobStore">The job store to initialize the transaction with.</param>
         /// <param name="connection">The connection to initialize the transaction with.</param>
         /// <param name="transaction">The concrete transaction to initialize the transaction with.</param>
-        public SqlJobStoreTransaction(DbConnection connection, DbTransaction transaction)
+        public SqlJobStoreTransaction(SqlJobStore jobStore, DbConnection connection, DbTransaction transaction)
         {
+            if (jobStore == null)
+            {
+                throw new ArgumentNullException("jobStore", "jobStore cannot be null.");
+            }
+
             if (connection == null)
             {
                 throw new ArgumentNullException("connection", "connection cannot be null.");
@@ -34,6 +40,7 @@ namespace BlueCollar
                 throw new ArgumentNullException("transaction", "transaction cannot be null.");
             }
 
+            this.JobStore = jobStore;
             this.Connection = connection;
             this.Transaction = transaction;
             this.IsActive = true;
@@ -56,6 +63,11 @@ namespace BlueCollar
         /// Gets or sets a value indicating whether the transaction is active.
         /// </summary>
         public virtual bool IsActive { get; protected set; }
+
+        /// <summary>
+        /// Gets the job store the transaction is for.
+        /// </summary>
+        public SqlJobStore JobStore { get; private set; }
 
         /// <summary>
         /// Gets or sets the concrete transaction.
@@ -116,11 +128,7 @@ namespace BlueCollar
                         this.Transaction = null;
                     }
 
-                    if (this.Connection != null)
-                    {
-                        this.Connection.Dispose();
-                        this.Connection = null;
-                    }
+                    this.JobStore.DisposeConnection(this.Connection);
                 }
 
                 this.disposed = true;

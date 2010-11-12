@@ -6,4 +6,5 @@ StyleCop.Cache
 testimpactdata.sdf
 bin/
 obj/
+Build/
 TestResults/

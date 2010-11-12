@@ -1,0 +1,796 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="JobRunner.cs" company="Tasty Codes">
+//     Copyright (c) 2010 Chad Burggraf.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace BlueCollar
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.Configuration;
+    using System.Diagnostics.CodeAnalysis;
+    using System.IO;
+    using System.Linq;
+    using System.Security;
+    using System.Threading;
+    using BlueCollar.Configuration;
+
+    /// <summary>
+    /// Runs jobs.
+    /// </summary>
+    public sealed class JobRunner
+    {
+        #region Private Fields
+
+        private static readonly object instanceLocker = new object();
+        private readonly object stateLocker = new object();
+        private readonly object runLocker = new object();
+        private static JobRunner defaultRunner;
+        private ReadOnlyCollection<JobScheduleElement> schedules;
+        private IEnumerable<ScheduledJobTuple> scheduledJobs;
+        private RunningJobs runs;
+        private IJobStore store;
+        private Thread god;
+        private int heartbeat, maximumConcurrency;
+        private DateTime? lastScheduleCheck;
+
+        #endregion
+
+        #region Construction
+
+        /// <summary>
+        /// Initializes a new instance of the JobRunner class.
+        /// </summary>
+        /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
+        public JobRunner(IJobStore store)
+            : this(store, null)
+        {
+            
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the JobRunner class.
+        /// </summary>
+        /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
+        /// <param name="runningJobsPersistencPath">The path to use when saving running jobs state to disk.</param>
+        public JobRunner(IJobStore store, string runningJobsPersistencPath)
+        {
+            if (store == null)
+            {
+                throw new ArgumentNullException("store", "store cannot be null.");
+            }
+
+            this.runs = new RunningJobs(runningJobsPersistencPath);
+            this.store = store;
+        }
+
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// Event raised when the runner has finished safely shutting down
+        /// there are no jobs currently running.
+        /// </summary>
+        public event EventHandler AllFinished;
+
+        /// <summary>
+        /// Event raised when a job has been canceled and and its run terminated.
+        /// </summary>
+        public event EventHandler<JobRecordEventArgs> CancelJob;
+
+        /// <summary>
+        /// Event raised when a job has been dequeued from the persistent store
+        /// and its run started.
+        /// </summary>
+        public event EventHandler<JobRecordEventArgs> DequeueJob;
+
+        /// <summary>
+        /// Event raised when an error occurs.
+        /// WARNING: The <see cref="JobRecord"/> passed with this event may be empty,
+        /// or the <see cref="Exception"/> may be null, or both.
+        /// </summary>
+        public event EventHandler<JobErrorEventArgs> Error;
+
+        /// <summary>
+        /// Event raised when a sceduled job loaded for execution.
+        /// </summary>
+        public event EventHandler<JobRecordEventArgs> ExecuteScheduledJob;
+
+        /// <summary>
+        /// Event raised when a job has finished execution.
+        /// This event is raised when the job finished naturally (i.e., not by canceling or timing out),
+        /// but regardless of whether it succeeded or not.
+        /// </summary>
+        public event EventHandler<JobRecordEventArgs> FinishJob;
+
+        /// <summary>
+        /// Event raised when a job has been timed out.
+        /// </summary>
+        public event EventHandler<JobRecordEventArgs> TimeoutJob;
+
+        #endregion
+
+        #region Public Static Properties
+
+        /// <summary>
+        /// Gets the default <see cref="JobRunner"/> instance, which is initialized with the default <see cref="IJobStore"/>.
+        /// </summary>
+        public static JobRunner DefaultRunner
+        {
+            get
+            {
+                lock (instanceLocker)
+                {
+                    if (defaultRunner == null)
+                    {
+                        defaultRunner = new JobRunner(JobStore.Current);
+                        defaultRunner.Heartbeat = BlueCollarSection.Current.Heartbeat;
+                        defaultRunner.MaximumConcurrency = BlueCollarSection.Current.MaximumConcurrency;
+                        defaultRunner.SetSchedules(BlueCollarSection.Current.Schedules);
+                    }
+
+                    return defaultRunner;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Public Instance Properties
+
+        /// <summary>
+        /// Gets the number of jobs currently being executed by the runner.
+        /// This number may reflect jobs that have finished but have yet to
+        /// be flushed.
+        /// </summary>
+        public int ExecutingJobCount
+        {
+            get 
+            {
+                lock (this.runLocker)
+                {
+                    return this.runs.Count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the run loop heartbeat, in miliseconds.
+        /// </summary>
+        public int Heartbeat
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    return this.heartbeat;
+                }
+            }
+
+            set
+            {
+                lock (this.stateLocker)
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentException("value must be greater than 0.", "value");
+                    }
+
+                    this.heartbeat = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the runner is currently running.
+        /// </summary>
+        public bool IsRunning { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the running is in the process of shutting down.
+        /// </summary>
+        public bool IsShuttingDown { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the maximum number of simultaneous jobs to run.
+        /// </summary>
+        public int MaximumConcurrency
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    return this.maximumConcurrency;
+                }
+            }
+
+            set
+            {
+                lock (this.stateLocker)
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentException("value must be greater than or equal to 0.", "value");
+                    }
+
+                    this.maximumConcurrency = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a collection of tuples representing scheduled jobs.
+        /// </summary>
+        public IEnumerable<ScheduledJobTuple> ScheduledJobs
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    if (this.scheduledJobs == null)
+                    {
+                        this.scheduledJobs = (from s in this.Schedules
+                                              from j in s.ScheduledJobs
+                                              select new ScheduledJobTuple()
+                                              {
+                                                  Schedule = s,
+                                                  ScheduledJob = j
+                                              }).ToArray();
+                    }
+
+                    return this.scheduledJobs;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the schedule collection to use when processing scheduled jobs.
+        /// </summary>
+        public ReadOnlyCollection<JobScheduleElement> Schedules
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    return this.schedules ?? (this.schedules = new ReadOnlyCollection<JobScheduleElement>(new List<JobScheduleElement>()));
+                }
+            }
+        }
+
+        #endregion
+
+        #region Public Instance Methods
+
+        /// <summary>
+        /// Pauses the job runner by preventing any new jobs
+        /// from being dequeued. Does not abort any currently running jobs.
+        /// </summary>
+        public void Pause()
+        {
+            lock (this.stateLocker)
+            {
+                this.IsRunning = false;
+            }
+        }
+
+        /// <summary>
+        /// Sets the schedule collection to use when processing scheduled jobs.
+        /// </summary>
+        /// <param name="schedules">A collection of schedules.</param>
+        public void SetSchedules(IEnumerable<JobScheduleElement> schedules)
+        {
+            if (schedules == null)
+            {
+                throw new ArgumentNullException("schedules", "schedules cannot be null.");
+            }
+
+            lock (this.stateLocker)
+            {
+                this.schedules = new ReadOnlyCollection<JobScheduleElement>(schedules.ToList());
+                this.scheduledJobs = null;
+            }
+        }
+
+        /// <summary>
+        /// Starts the runner if it is not already running.
+        /// </summary>
+        public void Start()
+        {
+            lock (this.stateLocker)
+            {
+                if (!this.IsShuttingDown)
+                {
+                    this.IsRunning = true;
+
+                    if (this.god == null || !this.god.IsAlive)
+                    {
+                        this.god = new Thread(this.SmiteThee);
+                        this.god.Start();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stops the runner if it is running.
+        /// </summary>
+        /// <param name="safely">A value indicating whether to safely shut down, allowing all currently
+        /// running jobs to complete, or immediately terminate all running jobs.</param>
+        public void Stop(bool safely)
+        {
+            lock (this.stateLocker)
+            {
+                if (!safely || !this.IsShuttingDown)
+                {
+                    this.IsShuttingDown = true;
+                    this.IsRunning = false;
+
+                    if (!safely)
+                    {
+                        if (this.god != null && this.god.IsAlive)
+                        {
+                            try
+                            {
+                                this.god.Abort();
+                                this.god = null;
+                            }
+                            catch (SecurityException)
+                            {
+                            }
+                            catch (ThreadStateException)
+                            {
+                            }
+                        }
+
+                        this.IsShuttingDown = false;
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Private Instance Methods
+
+        /// <summary>
+        /// Cancels any jobs marked as <see cref="JobStatus.Canceling"/>.
+        /// </summary>
+        private void CancelJobs()
+        {
+            using (IJobStoreTransaction trans = this.store.BeginTransaction())
+            {
+                try
+                {
+                    var runs = this.runs.GetRunning();
+                    var records = this.store.GetJobs(runs.Select(r => r.JobId), trans);
+
+                    var canceling = from run in runs
+                                    join record in records on run.JobId equals record.Id.Value
+                                    where record.Status == JobStatus.Canceling
+                                    select new
+                                    {
+                                        Run = run,
+                                        Record = record
+                                    };
+
+                    foreach (var job in canceling)
+                    {
+                        job.Run.Abort();
+                        job.Record.Status = JobStatus.Canceled;
+                        job.Record.FinishDate = job.Run.FinishDate;
+
+                        this.store.SaveJob(job.Record, trans);
+                        this.runs.Remove(job.Record.Id.Value);
+
+                        this.RaiseEvent(this.CancelJob, new JobRecordEventArgs(job.Record));
+                    }
+
+                    this.runs.Flush();
+                    trans.Commit();
+                }
+                catch
+                {
+                    trans.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cleans up any recovered jobs in this instance's <see cref="RunningJobs"/>.
+        /// </summary>
+        private void CleanupRecoveredJobs()
+        {
+            var runs = this.runs.GetAll().Where(r => r.WasRecovered);
+            var records = this.store.GetJobs(runs.Select(r => r.JobId));
+
+            var recovered = from run in runs
+                            join record in records on run.JobId equals record.Id.Value
+                            select new
+                            {
+                                Run = run,
+                                Record = record
+                            };
+
+            foreach (var job in recovered)
+            {
+                job.Record.Status = JobStatus.Interrupted;
+
+                if (job.Run.ExecutionException != null)
+                {
+                    job.Record.Exception = new ExceptionXElement(job.Run.ExecutionException).ToString();
+                }
+
+                this.store.SaveJob(job.Record);
+                this.runs.Remove(job.Record.Id.Value);
+            }
+
+            this.runs.Flush();
+        }
+
+        /// <summary>
+        /// Dequeues pending jobs in the job store.
+        /// </summary>
+        private void DequeueJobs()
+        {
+            int count = this.MaximumConcurrency - this.ExecutingJobCount;
+
+            if (count > 0)
+            {
+                DateTime now = DateTime.UtcNow;
+
+                using (IJobStoreTransaction trans = this.store.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var record in this.store.GetJobs(JobStatus.Queued, count, now, trans))
+                        {
+                            record.Status = JobStatus.Started;
+                            record.StartDate = now;
+
+                            IJob job = null;
+                            Exception toJobEx = null;
+
+                            try
+                            {
+                                job = record.ToJob();
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                toJobEx = ex.InnerException ?? ex;
+                                this.RaiseEvent(this.Error, new JobErrorEventArgs(record, toJobEx));
+                            }
+
+                            if (job != null)
+                            {
+                                JobRun run = new JobRun(record.Id.Value, job);
+                                run.Finished += new EventHandler<JobRunEventArgs>(this.JobRunFinished);
+                                this.runs.Add(run);
+
+                                run.Start();
+                            }
+                            else
+                            {
+                                record.Status = JobStatus.FailedToLoadType;
+                                record.FinishDate = now;
+                                record.Exception = new ExceptionXElement(toJobEx).ToString();
+                            }
+
+                            this.store.SaveJob(record, trans);
+                            this.RaiseEvent(this.DequeueJob, new JobRecordEventArgs(record));
+                        }
+
+                        this.runs.Flush();
+                        trans.Commit();
+                    }
+                    catch
+                    {
+                        trans.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes any scheduled jobs that are due.
+        /// </summary>
+        private void ExecuteScheduledJobs()
+        {
+            int count = this.MaximumConcurrency - this.ExecutingJobCount;
+
+            if (count > 0)
+            {
+                using (IJobStoreTransaction trans = this.store.BeginTransaction())
+                {
+                    try
+                    {
+                        DateTime now = DateTime.UtcNow;
+                        long heartbeat = this.lastScheduleCheck == null ? this.Heartbeat : (long)Math.Ceiling(now.Subtract(this.lastScheduleCheck.Value).TotalMilliseconds);
+                        this.lastScheduleCheck = now;
+
+                        var scheduleNames = this.Schedules.Select(s => s.Name);
+                        var records = this.store.GetLatestScheduledJobs(scheduleNames, trans);
+                        var tuples = ScheduledJobTuple.GetExecutableTuples(this.ScheduledJobs, records, now, heartbeat, count);
+
+                        foreach (ScheduledJobTuple tuple in tuples)
+                        {
+                            JobRecord record = ScheduledJob.CreateRecord(tuple.Schedule, tuple.ScheduledJob, now);
+
+                            bool running = 0 < (from r in this.runs.GetAll()
+                                                where tuple.Schedule.Name.Equals(r.ScheduleName, StringComparison.OrdinalIgnoreCase) &&
+                                                      tuple.ScheduledJob.JobType.StartsWith(record.JobType, StringComparison.OrdinalIgnoreCase)
+                                                select r).Count();
+
+                            if (!running)
+                            {
+                                IJob job = null;
+                                Exception toJobEx = null;
+
+                                try
+                                {
+                                    job = ScheduledJob.CreateFromConfiguration(tuple.ScheduledJob);
+                                }
+                                catch (ConfigurationErrorsException ex)
+                                {
+                                    toJobEx = ex;
+                                    this.RaiseEvent(this.Error, new JobErrorEventArgs(record, toJobEx));
+                                }
+
+                                if (job != null)
+                                {
+                                    record.Name = job.Name;
+                                    record.JobType = JobRecord.JobTypeString(job);
+                                    record.Data = job.Serialize();
+
+                                    // Save out of transaction to ensure it is peristed immediately.
+                                    this.store.SaveJob(record);
+
+                                    JobRun run = new JobRun(record.Id.Value, job);
+                                    run.Finished += new EventHandler<JobRunEventArgs>(this.JobRunFinished);
+                                    this.runs.Add(run);
+
+                                    run.Start();
+                                }
+                                else
+                                {
+                                    record.Status = JobStatus.FailedToLoadType;
+                                    record.FinishDate = now;
+                                    record.Exception = new ExceptionXElement(toJobEx).ToString();
+                                }
+
+                                this.store.SaveJob(record, trans);
+                                this.RaiseEvent(this.ExecuteScheduledJob, new JobRecordEventArgs(record));
+                            }
+                        }
+
+                        this.runs.Flush();
+                        trans.Commit();
+                    }
+                    catch
+                    {
+                        trans.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Performs the concrete finishing of the given job run.
+        /// </summary>
+        /// <param name="run">A job run to finish.</param>
+        /// <param name="record">The run's related record.</param>
+        /// <param name="trans">The transaction to access the job store in.</param>
+        private void FinishJobRun(JobRun run, JobRecord record, IJobStoreTransaction trans)
+        {
+            record.FinishDate = run.FinishDate;
+
+            if (run.ExecutionException != null)
+            {
+                record.Exception = new ExceptionXElement(run.ExecutionException).ToString();
+                record.Status = JobStatus.Failed;
+
+                this.RaiseEvent(this.Error, new JobErrorEventArgs(record, run.ExecutionException));
+            }
+            else if (run.WasRecovered)
+            {
+                record.Status = JobStatus.Interrupted;
+            }
+            else
+            {
+                record.Status = JobStatus.Succeeded;
+            }
+
+            this.store.SaveJob(record, trans);
+            this.runs.Remove(record.Id.Value);
+
+            this.RaiseEvent(this.FinishJob, new JobRecordEventArgs(record));
+        }
+
+        /// <summary>
+        /// Finishes any jobs that have completed by updating their records in the job store.
+        /// </summary>
+        private void FinishJobs()
+        {
+            using (IJobStoreTransaction trans = this.store.BeginTransaction())
+            {
+                try
+                {
+                    var runs = this.runs.GetNotRunning();
+                    var records = this.store.GetJobs(runs.Select(r => r.JobId), trans);
+
+                    var finishing = from run in runs
+                                    join record in records on run.JobId equals record.Id.Value
+                                    where record.Status == JobStatus.Started
+                                    select new
+                                    {
+                                        Run = run,
+                                        Record = record
+                                    };
+
+                    foreach (var job in finishing)
+                    {
+                        this.FinishJobRun(job.Run, job.Record, trans);
+                    }
+
+                    this.runs.Flush();
+                    trans.Commit();
+                }
+                catch
+                {
+                    trans.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Raises a JobRun's Finished event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void JobRunFinished(object sender, JobRunEventArgs e)
+        {
+            lock (this.runLocker)
+            {
+                using (IJobStoreTransaction trans = this.store.BeginTransaction())
+                {
+                    try
+                    {
+                        var run = this.runs.GetAll().Where(r => r.JobId == e.JobId).FirstOrDefault();
+
+                        if (run != null)
+                        {
+                            var record = this.store.GetJob(e.JobId, trans);
+
+                            if (record != null)
+                            {
+                                this.FinishJobRun(run, record, trans);
+                            }
+                        }
+
+                        trans.Commit();
+                        this.runs.Flush();
+                    }
+                    catch
+                    {
+                        trans.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Main God thread run loop.
+        /// </summary>
+        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "We want the run loop to continue at all costs.")]
+        private void SmiteThee()
+        {
+            lock (this.runLocker)
+            {
+                try
+                {
+                    this.CleanupRecoveredJobs();
+                }
+                catch (Exception ex)
+                {
+                    this.RaiseEvent(this.Error, new JobErrorEventArgs(null, ex));
+                }
+            }
+
+            while (true)
+            {
+                try
+                {
+                    lock (this.runLocker)
+                    {
+                        this.CancelJobs();
+                        this.TimeoutJobs();
+                        this.FinishJobs();
+
+                        lock (this.stateLocker)
+                        {
+                            if (this.IsRunning)
+                            {
+                                this.ExecuteScheduledJobs();
+                                this.DequeueJobs();
+                            }
+                            else if (this.IsShuttingDown && this.ExecutingJobCount == 0)
+                            {
+                                this.IsShuttingDown = false;
+                                this.RaiseEvent(this.AllFinished, EventArgs.Empty);
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    this.RaiseEvent(this.Error, new JobErrorEventArgs(null, ex));
+                }
+
+                Thread.Sleep(this.Heartbeat);
+            }
+        }
+
+        /// <summary>
+        /// Times out any currently running jobs that have been running for too long.
+        /// </summary>
+        private void TimeoutJobs()
+        {
+            using (IJobStoreTransaction trans = this.store.BeginTransaction())
+            {
+                try
+                {
+                    var runs = this.runs.GetRunning();
+                    var records = this.store.GetJobs(runs.Select(r => r.JobId), trans);
+
+                    var timingOut = from run in runs
+                                    join record in records on run.JobId equals record.Id.Value
+                                    where run.Job != null
+                                        && run.StartDate != null
+                                        && DateTime.UtcNow.Subtract(run.StartDate.Value).TotalMilliseconds >= run.Job.Timeout
+                                        && record.Status == JobStatus.Started
+                                    select new
+                                    {
+                                        Run = run,
+                                        Record = record
+                                    };
+
+                    foreach (var job in timingOut)
+                    {
+                        if (job.Run.Abort())
+                        {
+                            job.Record.Status = JobStatus.TimedOut;
+                            job.Record.FinishDate = job.Run.FinishDate;
+
+                            this.store.SaveJob(job.Record, trans);
+                            this.runs.Remove(job.Record.Id.Value);
+
+                            this.RaiseEvent(this.TimeoutJob, new JobRecordEventArgs(job.Record));
+                        }
+                    }
+
+                    this.runs.Flush();
+                    trans.Commit();
+                }
+                catch
+                {
+                    trans.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        #endregion
+    }
+}

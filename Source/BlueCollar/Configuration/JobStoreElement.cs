@@ -16,9 +16,9 @@ namespace BlueCollar.Configuration
     {
         /// <summary>
         /// Gets or sets the type of the <see cref="BlueCollar.IJobStore"/> implementation to use when persisting jobs.
-        /// When not configured, defaults to "BlueCollar.SQLiteJobStore, BlueCollar".
+        /// When not configured, defaults to "BlueCollar.MemoryJobStore, BlueCollar".
         /// </summary>
-        [ConfigurationProperty("type", IsRequired = false, DefaultValue = "BlueCollar.SQLiteJobStore, BlueCollar")]
+        [ConfigurationProperty("type", IsRequired = false, DefaultValue = "BlueCollar.MemoryJobStore, BlueCollar")]
         public string JobStoreType
         {
             get { return (string)this["type"]; }

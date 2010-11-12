@@ -75,8 +75,10 @@ namespace BlueCollar.Test
         {
             if (this.Store != null)
             {
-                int queuedCount = this.Store.GetJobs(JobStatus.Queued, 0).Count();
-                int finishedCount = this.Store.GetJobs(JobStatus.Succeeded, 0).Count();
+                DateTime now = DateTime.MaxValue;
+
+                int queuedCount = this.Store.GetJobs(JobStatus.Queued, 0, now).Count();
+                int finishedCount = this.Store.GetJobs(JobStatus.Succeeded, 0, now).Count();
                 int testIdJobCount = this.Store.GetJobCount(new TestIdJob().Name, null, null);
 
                 var job1 = this.CreateRecord(new TestIdJob(), JobStatus.Queued);
@@ -91,8 +93,8 @@ namespace BlueCollar.Test
                 Assert.IsTrue(jobs.Any(j => j.Id.Value == job1.Id.Value));
                 Assert.IsTrue(jobs.Any(j => j.Id.Value == job2.Id.Value));
 
-                Assert.AreEqual(queuedCount + 1, this.Store.GetJobs(JobStatus.Queued, 0).Count());
-                Assert.AreEqual(finishedCount + 1, this.Store.GetJobs(JobStatus.Succeeded, 0).Count());
+                Assert.AreEqual(queuedCount + 1, this.Store.GetJobs(JobStatus.Queued, 0, now).Count());
+                Assert.AreEqual(finishedCount + 1, this.Store.GetJobs(JobStatus.Succeeded, 0, now).Count());
                 Assert.IsNotNull(this.Store.GetJob(job1.Id.Value));
                 Assert.AreEqual(0, this.Store.GetJobs(new int[0]).Count());
 
@@ -109,33 +111,47 @@ namespace BlueCollar.Test
         {
             if (this.Store != null)
             {
-                // JobRunner.GetInstance(this.Store).Stop(true);
-                string a = Guid.NewGuid().ToString();
-                string b = Guid.NewGuid().ToString();
-                string c = Guid.NewGuid().ToString();
-                string d = Guid.NewGuid().ToString();
+                bool running = JobRunner.DefaultRunner.IsRunning;
+                JobRunner.DefaultRunner.Stop(false);
 
-                var idA1 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/1/10"), a).Id.Value;
-                var idA2 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/2/10"), a).Id.Value;
-                var idA3 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/3/10"), a).Id.Value;
+                try
+                {
+                    this.Store.DeleteAllJobs();
 
-                var slowA1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), a).Id.Value;
-                var slowA2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), a).Id.Value;
+                    string a = Guid.NewGuid().ToString();
+                    string b = Guid.NewGuid().ToString();
+                    string c = Guid.NewGuid().ToString();
+                    string d = Guid.NewGuid().ToString();
 
-                var slowB1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), b).Id.Value;
-                var slowB2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), b).Id.Value;
+                    var idA1 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/1/10"), a).Id.Value;
+                    var idA2 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/2/10"), a).Id.Value;
+                    var idA3 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/3/10"), a).Id.Value;
 
-                var timeoutC1 = this.CreateAndSaveScheduledSucceeded(new TestTimeoutJob(), DateTime.Parse("2/3/10"), c).Id.Value;
+                    var slowA1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), a).Id.Value;
+                    var slowA2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), a).Id.Value;
 
-                var latest = this.Store.GetLatestScheduledJobs(new string[] { a, b, c, d });
+                    var slowB1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), b).Id.Value;
+                    var slowB2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), b).Id.Value;
 
-                string idJobType = JobRecord.JobTypeString(typeof(TestIdJob));
-                string slowJobType = JobRecord.JobTypeString(typeof(TestSlowJob));
+                    var timeoutC1 = this.CreateAndSaveScheduledSucceeded(new TestTimeoutJob(), DateTime.Parse("2/3/10"), c).Id.Value;
 
-                Assert.AreEqual(idA3, latest.Where(r => r.ScheduleName == a && r.JobType == idJobType).FirstOrDefault().Id);
-                Assert.AreEqual(slowA2, latest.Where(r => r.ScheduleName == a && r.JobType == slowJobType).FirstOrDefault().Id);
-                Assert.AreEqual(slowB2, latest.Where(r => r.ScheduleName == b).FirstOrDefault().Id);
-                Assert.AreEqual(timeoutC1, latest.Where(r => r.ScheduleName == c).FirstOrDefault().Id);
+                    var latest = this.Store.GetLatestScheduledJobs(new string[] { a, b, c, d });
+
+                    string idJobType = JobRecord.JobTypeString(typeof(TestIdJob));
+                    string slowJobType = JobRecord.JobTypeString(typeof(TestSlowJob));
+
+                    Assert.AreEqual(idA3, latest.Where(r => r.ScheduleName == a && r.JobType == idJobType).FirstOrDefault().Id);
+                    Assert.AreEqual(slowA2, latest.Where(r => r.ScheduleName == a && r.JobType == slowJobType).FirstOrDefault().Id);
+                    Assert.AreEqual(slowB2, latest.Where(r => r.ScheduleName == b).FirstOrDefault().Id);
+                    Assert.AreEqual(timeoutC1, latest.Where(r => r.ScheduleName == c).FirstOrDefault().Id);
+                }
+                finally
+                {
+                    if (running)
+                    {
+                        JobRunner.DefaultRunner.Start();
+                    }
+                }
             }
         }
 

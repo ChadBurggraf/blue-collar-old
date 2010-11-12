@@ -22,15 +22,16 @@ namespace BlueCollar
     [DataContract]
     public sealed class RunningJobs
     {
+        private static readonly string defaultPersistencPath = Path.Combine(Path.GetTempPath(), "BlueCollarRunningJobs.xml");
+        private static readonly object persistenceFileLocker = new object();
         private List<JobRun> runs;
 
         /// <summary>
         /// Initializes a new instance of the RunningJobs class.
         /// </summary>
         public RunningJobs()
+            : this(defaultPersistencPath)
         {
-            this.PersistencePath = Path.Combine(Path.GetTempPath(), GeneratePersistenceFileName(JobStore.Current));
-            this.runs = new List<JobRun>(LoadFromPersisted(this.PersistencePath));
         }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace BlueCollar
         {
             if (String.IsNullOrEmpty(persistencePath))
             {
-                throw new ArgumentNullException("persistencePath", "persistencePath must contain a value.");
+                persistencePath = defaultPersistencPath;
             }
 
             if (!Path.IsPathRooted(persistencePath))
@@ -66,17 +67,6 @@ namespace BlueCollar
         /// </summary>
         public string PersistencePath { get; private set; }
 
-        /// <summary>
-        /// Generates a stable persistence file name for the given job store.
-        /// The name will be unique for the type, and remain the same as long as the type's
-        /// name and assembly name (not including version number or public key) do not change.
-        /// </summary>
-        /// <param name="store">The job store to generate the persistence file name for.</param>
-        /// <returns>The generated persistence file name.</returns>
-        public static string GeneratePersistenceFileName(IJobStore store)
-        {
-            return String.Concat(store.GetHashCode().ToString(CultureInfo.InvariantCulture).Hash(), ".xml");
-        }
 
         /// <summary>
         /// Gets all of the job runs this instance is maintaining.
@@ -140,17 +130,20 @@ namespace BlueCollar
         {
             lock (this.runs)
             {
-                if (SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Write, this.PersistencePath)))
+                lock (persistenceFileLocker)
                 {
-                    var exceptionTypes = (from r in this.runs
-                                          where r.ExecutionException != null
-                                          select r.ExecutionException.GetType()).Distinct();
-
-                    DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]), exceptionTypes);
-
-                    using (FileStream stream = File.Create(this.PersistencePath))
+                    if (SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Write, this.PersistencePath)))
                     {
-                        serializer.WriteObject(stream, this.runs.ToArray());
+                        var exceptionTypes = (from r in this.runs
+                                              where r.ExecutionException != null
+                                              select r.ExecutionException.GetType()).Distinct();
+
+                        DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]), exceptionTypes);
+
+                        using (FileStream stream = File.Create(this.PersistencePath))
+                        {
+                            serializer.WriteObject(stream, this.runs.ToArray());
+                        }
                     }
                 }
             }
@@ -178,20 +171,27 @@ namespace BlueCollar
         {
             IEnumerable<JobRun> runs;
 
-            if (SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Read, persistencPath)))
+            lock (persistenceFileLocker)
             {
-                if (File.Exists(persistencPath))
+                if (SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Read, persistencPath)))
                 {
-                    DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]));
-
-                    try
+                    if (File.Exists(persistencPath))
                     {
-                        using (FileStream stream = File.OpenRead(persistencPath))
+                        DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]));
+
+                        try
                         {
-                            runs = (JobRun[])serializer.ReadObject(stream);
+                            using (FileStream stream = File.OpenRead(persistencPath))
+                            {
+                                runs = (JobRun[])serializer.ReadObject(stream);
+                            }
+                        }
+                        catch
+                        {
+                            runs = new JobRun[0];
                         }
                     }
-                    catch
+                    else
                     {
                         runs = new JobRun[0];
                     }
@@ -200,10 +200,6 @@ namespace BlueCollar
                 {
                     runs = new JobRun[0];
                 }
-            }
-            else
-            {
-                runs = new JobRun[0];
             }
 
             DateTime now = DateTime.UtcNow;

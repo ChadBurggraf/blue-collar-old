@@ -96,6 +96,20 @@ namespace BlueCollar
         public abstract IJobStoreTransaction BeginTransaction();
 
         /// <summary>
+        /// Delets all jobs in the job store.
+        /// </summary>
+        public virtual void DeleteAllJobs()
+        {
+            this.DeleteAllJobs(null);
+        }
+
+        /// <summary>
+        /// Deletes all jobs in the job store.
+        /// </summary>
+        /// <param name="transaction">The transaction to execute the command in.</param>
+        public abstract void DeleteAllJobs(IJobStoreTransaction transaction);
+
+        /// <summary>
         /// Deletes a job by ID.
         /// </summary>
         /// <param name="id">The ID of the job to delete.</param>
@@ -110,26 +124,6 @@ namespace BlueCollar
         /// <param name="id">The ID of the job to delete.</param>
         /// <param name="transaction">The transaction to execute the command in.</param>
         public abstract void DeleteJob(int id, IJobStoreTransaction transaction);
-
-        /// <summary>
-        /// Gets a value indicating whether this instance is equal to the given object.
-        /// Overridden to only compare on hash codes.
-        /// </summary>
-        /// <param name="obj">The object to compare.</param>
-        /// <returns>True if the object is equal to this instance, false otherwise.</returns>
-        public override bool Equals(object obj)
-        {
-            return obj != null && obj is IJobStore && obj.GetHashCode() == this.GetHashCode();
-        }
-
-        /// <summary>
-        /// Gets the hash code for this instance.
-        /// </summary>
-        /// <returns>This instance's hash code.</returns>
-        public override int GetHashCode()
-        {
-            return this.TypeName.GetHashCode();
-        }
 
         /// <summary>
         /// Gets a job by ID.
@@ -195,10 +189,11 @@ namespace BlueCollar
         /// </summary>
         /// <param name="status">The status of the jobs to get.</param>
         /// <param name="count">The maximum number of jobs to get.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <returns>A collection of jobs.</returns>
-        public virtual IEnumerable<JobRecord> GetJobs(JobStatus status, int count)
+        public virtual IEnumerable<JobRecord> GetJobs(JobStatus status, int count, DateTime before)
         {
-            return this.GetJobs(status, count, null);
+            return this.GetJobs(status, count, before, null);
         }
 
         /// <summary>
@@ -207,9 +202,10 @@ namespace BlueCollar
         /// </summary>
         /// <param name="status">The status of the jobs to get.</param>
         /// <param name="count">The maximum number of jobs to get.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <param name="transaction">The transaction to execute the command in.</param>
         /// <returns>A collection of jobs.</returns>
-        public abstract IEnumerable<JobRecord> GetJobs(JobStatus status, int count, IJobStoreTransaction transaction);
+        public abstract IEnumerable<JobRecord> GetJobs(JobStatus status, int count, DateTime before, IJobStoreTransaction transaction);
 
         /// <summary>
         /// Gets a collection of jobs that match the given filter parameters, ordered by the given sort parameters.

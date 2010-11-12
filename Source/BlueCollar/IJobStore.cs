@@ -22,6 +22,17 @@ namespace BlueCollar
         IJobStoreTransaction BeginTransaction();
 
         /// <summary>
+        /// Delets all jobs in the job store.
+        /// </summary>
+        void DeleteAllJobs();
+
+        /// <summary>
+        /// Deletes all jobs in the job store.
+        /// </summary>
+        /// <param name="transaction">The transaction to execute the command in.</param>
+        void DeleteAllJobs(IJobStoreTransaction transaction);
+
+        /// <summary>
         /// Deletes a job by ID.
         /// </summary>
         /// <param name="id">The ID of the job to delete.</param>
@@ -89,8 +100,9 @@ namespace BlueCollar
         /// </summary>
         /// <param name="status">The status of the jobs to get.</param>
         /// <param name="count">The maximum number of jobs to get.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <returns>A collection of jobs.</returns>
-        IEnumerable<JobRecord> GetJobs(JobStatus status, int count);
+        IEnumerable<JobRecord> GetJobs(JobStatus status, int count, DateTime before);
 
         /// <summary>
         /// Gets a collection of jobs with the given status, returning
@@ -98,9 +110,10 @@ namespace BlueCollar
         /// </summary>
         /// <param name="status">The status of the jobs to get.</param>
         /// <param name="count">The maximum number of jobs to get.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <param name="transaction">The transaction to execute the command in.</param>
         /// <returns>A collection of jobs.</returns>
-        IEnumerable<JobRecord> GetJobs(JobStatus status, int count, IJobStoreTransaction transaction);
+        IEnumerable<JobRecord> GetJobs(JobStatus status, int count, DateTime before, IJobStoreTransaction transaction);
 
         /// <summary>
         /// Gets a collection of jobs that match the given filter parameters, ordered by the given sort parameters.

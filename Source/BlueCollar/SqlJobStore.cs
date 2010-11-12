@@ -84,28 +84,43 @@ namespace BlueCollar
         /// <returns>A new <see cref="IJobStoreTransaction"/>.</returns>
         public override IJobStoreTransaction BeginTransaction()
         {
-            DbConnection connection = this.CreateConnection();
-            connection.Open();
-
-            return new SqlJobStoreTransaction(connection, connection.BeginTransaction(IsolationLevel.ReadCommitted));
+            DbConnection connection = this.CreateAndOpenConnection();
+            return new SqlJobStoreTransaction(this, connection, connection.BeginTransaction(IsolationLevel.ReadCommitted));
         }
 
         /// <summary>
-        /// Initializes the job store from the given configuration element.
+        /// Deletes all jobs in the job store.
         /// </summary>
-        /// <param name="element">The configuration element to initialize the job store from.</param>
-        public override void Initialize(JobStoreElement element)
+        /// <param name="transaction">The transaction to execute the command in.</param>
+        public override void DeleteAllJobs(IJobStoreTransaction transaction)
         {
-            base.Initialize(element);
+            SqlJobStoreTransaction trans = transaction as SqlJobStoreTransaction;
+            DbConnection connection = null;
+            DbCommand command = null;
 
-            if (String.IsNullOrEmpty(this.ConnectionString) && element != null)
+            try
             {
-                this.ConnectionString = Strings.ConfiguredConnectionString(element.Metadata);
+                if (trans != null)
+                {
+                    command = this.CreateDeleteCommand(trans.Connection);
+                    command.Transaction = trans.Transaction;
+                }
+                else
+                {
+                    connection = this.CreateAndOpenConnection();
+                    command = this.CreateDeleteCommand(connection);
+                }
+
+                command.ExecuteNonQuery();
             }
-
-            if (String.IsNullOrEmpty(this.ConnectionString))
+            finally
             {
-                throw new ConfigurationErrorsException(@"Failed to find a connection string to initialze the job store with. Either you're missing the definition in blueCollar/store/metadata[key = ""ConnectionStringName""], or the name found does not identify a connection string under connectionStrings or appSettings.", element.ElementInformation.Source, element.ElementInformation.LineNumber);
+                if (command != null)
+                {
+                    command.Dispose();
+                }
+
+                this.DisposeConnection(connection);
             }
         }
 
@@ -129,8 +144,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateDeleteCommand(connection, id);
                 }
 
@@ -143,9 +157,37 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
+                this.DisposeConnection(connection);
+            }
+        }
+
+        /// <summary>
+        /// Disposes the given database connection created by this instance.
+        /// </summary>
+        /// <param name="connection">The database connection to dispose.</param>
+        public virtual void DisposeConnection(DbConnection connection)
+        {
+            if (connection != null)
+            {
+                connection.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Initializes the job store from the given configuration element.
+        /// </summary>
+        /// <param name="element">The configuration element to initialize the job store from.</param>
+        public override void Initialize(JobStoreElement element)
+        {
+            base.Initialize(element);
+
+            if (String.IsNullOrEmpty(this.ConnectionString) && element != null)
+            {
+                this.ConnectionString = Strings.ConfiguredConnectionString(element.Metadata);
+
+                if (String.IsNullOrEmpty(this.ConnectionString))
                 {
-                    connection.Dispose();
+                    throw new ConfigurationErrorsException(@"Failed to find a connection string to initialze the job store with. Either you're missing the definition in blueCollar/store/metadata[key = ""ConnectionStringName""], or the name found does not identify a connection string under connectionStrings or appSettings.", element.ElementInformation.Source, element.ElementInformation.LineNumber);
                 }
             }
         }
@@ -172,8 +214,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateSelectCommand(connection, id);
                 }
 
@@ -192,10 +233,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
 
             return record;
@@ -225,8 +263,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateCountCommand(connection, likeName, withStatus, inSchedule);
                 }
 
@@ -239,10 +276,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
 
             return count;
@@ -270,8 +304,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateSelectCommand(connection, ids);
                 }
 
@@ -290,10 +323,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
 
             return records;
@@ -305,9 +335,10 @@ namespace BlueCollar
         /// </summary>
         /// <param name="status">The status of the jobs to get.</param>
         /// <param name="count">The maximum number of jobs to get.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <param name="transaction">The transaction to execute the command in.</param>
         /// <returns>A collection of jobs.</returns>
-        public override IEnumerable<JobRecord> GetJobs(JobStatus status, int count, IJobStoreTransaction transaction)
+        public override IEnumerable<JobRecord> GetJobs(JobStatus status, int count, DateTime before, IJobStoreTransaction transaction)
         {
             SqlJobStoreTransaction trans = transaction as SqlJobStoreTransaction;
             DbConnection connection = null;
@@ -318,14 +349,13 @@ namespace BlueCollar
             {
                 if (trans != null)
                 {
-                    command = this.CreateSelectCommand(trans.Connection, status, count);
+                    command = this.CreateSelectCommand(trans.Connection, status, count, before);
                     command.Transaction = trans.Transaction;
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
-                    command = this.CreateSelectCommand(connection, status, count);
+                    connection = this.CreateAndOpenConnection();
+                    command = this.CreateSelectCommand(connection, status, count, before);
                 }
 
                 using (DbDataReader reader = command.ExecuteReader())
@@ -343,10 +373,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
 
             return records;
@@ -380,8 +407,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateSelectCommand(connection, likeName, withStatus, inSchedule, orderBy, sortDescending, pageNumber, pageSize);
                 }
 
@@ -400,10 +426,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
 
             return records;
@@ -432,8 +455,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateLatestScheduledJobsSelectCommand(connection, scheduleNames);
                 }
 
@@ -452,10 +474,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
 
             return records;
@@ -482,8 +501,7 @@ namespace BlueCollar
                 }
                 else
                 {
-                    connection = this.CreateConnection();
-                    connection.Open();
+                    connection = this.CreateAndOpenConnection();
                     command = this.CreateSaveCommand(connection, record);
                 }
 
@@ -509,10 +527,7 @@ namespace BlueCollar
                     command.Dispose();
                 }
 
-                if (connection != null)
-                {
-                    connection.Dispose();
-                }
+                this.DisposeConnection(connection);
             }
         }
 
@@ -531,10 +546,10 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Creates a connection to the SQL job store.
+        /// Creates and opens a connection to the SQL job store.
         /// </summary>
         /// <returns>The created connection.</returns>
-        protected abstract DbConnection CreateConnection();
+        protected abstract DbConnection CreateAndOpenConnection();
 
         /// <summary>
         /// Creates a command that can be used to fetch the number of records matching the given filter parameters.
@@ -574,6 +589,19 @@ namespace BlueCollar
             command.CommandText = sb.ToString();
             command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Name"), String.Concat("%", (likeName ?? String.Empty).Trim(), "%")));
 
+            return command;
+        }
+
+        /// <summary>
+        /// Creates a delete command.
+        /// </summary>
+        /// <param name="connection">The connection to create the command with.</param>
+        /// <returns>A delete command.</returns>
+        protected virtual DbCommand CreateDeleteCommand(DbConnection connection)
+        {
+            DbCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = String.Format(CultureInfo.InvariantCulture, "DELETE FROM {0};", this.TableName);
             return command;
         }
 
@@ -852,15 +880,17 @@ namespace BlueCollar
         /// <param name="connection">The connection to create the command with.</param>
         /// <param name="status">The job status to filter results on.</param>
         /// <param name="count">The maximum number of results to select.</param>
+        /// <param name="before">The queued-after date to filter on.</param>
         /// <returns>A select command.</returns>
-        protected virtual DbCommand CreateSelectCommand(DbConnection connection, JobStatus status, int count)
+        protected virtual DbCommand CreateSelectCommand(DbConnection connection, JobStatus status, int count, DateTime before)
         {
-            const string SqlStart = "SELECT * FROM {0} WHERE {1} = {2} ORDER BY {3}";
+            const string SqlStart = "SELECT * FROM {0} WHERE {1} = {2} AND {3} < {4} ORDER BY {3}";
             const string SqlEnd = " LIMIT {0}";
 
             DbCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Status"), status.ToString()));
+            command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Before"), before));
 
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat(
@@ -869,7 +899,8 @@ namespace BlueCollar
                 this.TableName,
                 this.ColumnName("Status"),
                 this.ParameterName("Status"),
-                this.ColumnName("QueueDate"));
+                this.ColumnName("QueueDate"),
+                this.ParameterName("Before"));
 
             if (count > 0)
             {
@@ -895,7 +926,55 @@ namespace BlueCollar
         /// <param name="pageNumber">The page number to get.</param>
         /// <param name="pageSize">The size of the pages to get.</param>
         /// <returns>A select command.</returns>
-        protected abstract DbCommand CreateSelectCommand(DbConnection connection, string likeName, JobStatus? withStatus, string inSchedule, JobRecordResultsOrderBy orderBy, bool sortDescending, int pageNumber, int pageSize);
+        protected virtual DbCommand CreateSelectCommand(DbConnection connection, string likeName, JobStatus? withStatus, string inSchedule, JobRecordResultsOrderBy orderBy, bool sortDescending, int pageNumber, int pageSize)
+        {
+            const string Sql = @"SELECT * FROM {0} WHERE {1} LIKE {2}";
+
+            if (pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
+
+            if (pageSize < 0)
+            {
+                pageSize = 0;
+            }
+
+            DbCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Name"), String.Concat("%", (likeName ?? String.Empty).Trim(), "%")));
+            
+            StringBuilder sb = new StringBuilder();
+            sb.AppendFormat(
+                CultureInfo.InvariantCulture,
+                Sql,
+                this.TableName,
+                this.ColumnName("Name"),
+                this.ParameterName("Name"));
+
+            if (withStatus != null)
+            {
+                sb.AppendFormat(CultureInfo.InvariantCulture, " AND {0} = {1}", this.ColumnName("Status"), this.ParameterName("Status"));
+                command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Status"), withStatus.Value.ToString()));
+            }
+
+            if (!String.IsNullOrEmpty(inSchedule))
+            {
+                sb.AppendFormat(CultureInfo.InvariantCulture, " AND {0} = {1}", this.ColumnName("ScheduleName"), this.ParameterName("ScheduleName"));
+                command.Parameters.Add(this.ParameterWithValue(this.ParameterName("ScheduleName"), withStatus.Value.ToString()));
+            }
+
+            sb.AppendFormat(
+                CultureInfo.InvariantCulture, 
+                " ORDER BY {0} {1} LIMIT {2} OFFSET {3};", 
+                this.GetOrderByColumnName(orderBy), 
+                sortDescending ? "DESC" : "ASC",
+                pageSize,
+                (pageNumber - 1) * pageSize);
+
+            command.CommandText = sb.ToString();
+            return command;
+        }
 
         /// <summary>
         /// Gets the formatted column name to use for the given <see cref="JobRecordResultsOrderBy"/> value.
