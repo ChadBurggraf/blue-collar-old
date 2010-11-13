@@ -20,25 +20,40 @@ namespace BlueCollar.Test
     public class JobRunnerTests
     {
         private const int heartbeat = 1000;
-        private IJobStore jobStore;
-        private JobRunner jobRunner;
+        private static int originalHeartbeat;
+        private static IJobStore jobStore;
+        private static JobRunner jobRunner;
 
         /// <summary>
-        /// Initializes a new instance of the JobRunnerTests class.
+        /// Cleans up resources used by the test run.
         /// </summary>
-        public JobRunnerTests()
+        [ClassCleanup]
+        public static void Cleanup()
         {
-            //this.jobStore = new SQLiteJobStore("data source=" + Guid.NewGuid().ToString() + ".s3db");
-            //this.jobStore = new MemoryJobStore();
-            this.jobStore = new SqlServerJobStore(ConfigurationManager.AppSettings["SqlServerConnectionString"]);
-            this.jobStore.Initialize(null);
-            this.jobStore.DeleteAllJobs();
+            jobRunner.Stop(false);
+            BlueCollarSection.Current.Heartbeat = originalHeartbeat;
+        }
 
-            this.jobRunner = new JobRunner(this.jobStore, Guid.NewGuid().ToString() + ".xml");
-            this.jobRunner.Heartbeat = heartbeat;
-            this.jobRunner.MaximumConcurrency = 25;
-            this.jobRunner.Error += new EventHandler<JobErrorEventArgs>(this.JobRunnerError);
-            this.jobRunner.Start();
+        /// <summary>
+        /// Initializes the class for the given test context.
+        /// </summary>
+        /// <param name="context">The test context to initialize the class for.</param>
+        [ClassInitialize]
+        public static void Initialize(TestContext context)
+        {
+            originalHeartbeat = BlueCollarSection.Current.Heartbeat;
+            BlueCollarSection.Current.Heartbeat = heartbeat;
+
+            jobStore = new MemoryJobStore();
+            jobStore.Initialize(null);
+            jobStore.DeleteAllJobs();
+
+            jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".xml");
+            jobRunner.Heartbeat = heartbeat;
+            jobRunner.MaximumConcurrency = 25;
+            jobRunner.SetSchedules(null);
+            jobRunner.Error += new EventHandler<JobErrorEventArgs>(JobRunnerError);
+            jobRunner.Start();
         }
 
         /// <summary>
@@ -47,19 +62,17 @@ namespace BlueCollar.Test
         [TestMethod]
         public void JobRunnerCancelJobs()
         {
-            this.jobRunner.Start();
-
-            var id = new TestSlowJob().Enqueue(this.jobStore).Id.Value;
+            var id = new TestSlowJob().Enqueue(jobStore).Id.Value;
             Thread.Sleep(heartbeat * 2);
 
-            var record = this.jobStore.GetJob(id);
+            var record = jobStore.GetJob(id);
             Assert.AreEqual(JobStatus.Started, record.Status);
 
             record.Status = JobStatus.Canceling;
-            this.jobStore.SaveJob(record);
+            jobStore.SaveJob(record);
             Thread.Sleep(heartbeat * 2);
 
-            Assert.AreEqual(JobStatus.Canceled, this.jobStore.GetJob(id).Status);
+            Assert.AreEqual(JobStatus.Canceled, jobStore.GetJob(id).Status);
         }
 
         /// <summary>
@@ -68,12 +81,10 @@ namespace BlueCollar.Test
         [TestMethod]
         public void JobRunnerDequeueJobs()
         {
-            this.jobRunner.Start();
-
-            var id = new TestSlowJob().Enqueue(this.jobStore).Id.Value;
+            var id = new TestSlowJob().Enqueue(jobStore).Id.Value;
             Thread.Sleep(heartbeat * 2);
 
-            Assert.AreEqual(JobStatus.Started, this.jobStore.GetJob(id).Status);
+            Assert.AreEqual(JobStatus.Started, jobStore.GetJob(id).Status);
         }
 
         /// <summary>
@@ -118,12 +129,12 @@ namespace BlueCollar.Test
             sched2.ScheduledJobs.Add(job2);
             sched3.ScheduledJobs.Add(job1);
 
-            this.jobRunner.SetSchedules(new JobScheduleElement[] { sched1, sched2, sched3 });
+            jobRunner.SetSchedules(new JobScheduleElement[] { sched1, sched2, sched3 });
             Thread.Sleep(heartbeat * 2);
 
-            Assert.AreEqual(2, this.jobStore.GetJobCount(null, null, sched1.Name));
-            Assert.AreEqual(1, this.jobStore.GetJobCount(null, null, sched2.Name));
-            Assert.AreEqual(0, this.jobStore.GetJobCount(null, null, sched3.Name));
+            Assert.AreEqual(2, jobStore.GetJobCount(null, null, sched1.Name));
+            Assert.AreEqual(1, jobStore.GetJobCount(null, null, sched2.Name));
+            Assert.AreEqual(0, jobStore.GetJobCount(null, null, sched3.Name));
         }
 
         /// <summary>
@@ -132,12 +143,10 @@ namespace BlueCollar.Test
         [TestMethod]
         public void JobRunnerFinishJobs()
         {
-            this.jobRunner.Start();
-
-            var id = new TestQuickJob().Enqueue(this.jobStore).Id.Value;
+            var id = new TestQuickJob().Enqueue(jobStore).Id.Value;
             Thread.Sleep(heartbeat * 2);
 
-            Assert.AreEqual(JobStatus.Succeeded, this.jobStore.GetJob(id).Status);
+            Assert.AreEqual(JobStatus.Succeeded, jobStore.GetJob(id).Status);
         }
 
         /// <summary>
@@ -146,12 +155,10 @@ namespace BlueCollar.Test
         [TestMethod]
         public void JobRunnerTimeoutJobs()
         {
-            this.jobRunner.Start();
+            var id = new TestTimeoutJob().Enqueue(jobStore).Id.Value;
+            Thread.Sleep(heartbeat * 2);
 
-            var id = new TestTimeoutJob().Enqueue(this.jobStore).Id.Value;
-            Thread.Sleep(heartbeat * 3);
-
-            Assert.AreEqual(JobStatus.TimedOut, this.jobStore.GetJob(id).Status);
+            Assert.AreEqual(JobStatus.TimedOut, jobStore.GetJob(id).Status);
         }
 
         /// <summary>
@@ -159,7 +166,7 @@ namespace BlueCollar.Test
         /// </summary>
         /// <param name="sender">The evnt sender.</param>
         /// <param name="e">The event arguments.</param>
-        private void JobRunnerError(object sender, JobErrorEventArgs e)
+        private static void JobRunnerError(object sender, JobErrorEventArgs e)
         {
             if (e.Exception != null)
             {

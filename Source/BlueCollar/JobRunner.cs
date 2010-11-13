@@ -282,14 +282,9 @@ namespace BlueCollar
         /// <param name="schedules">A collection of schedules.</param>
         public void SetSchedules(IEnumerable<JobScheduleElement> schedules)
         {
-            if (schedules == null)
-            {
-                throw new ArgumentNullException("schedules", "schedules cannot be null.");
-            }
-
             lock (this.stateLocker)
             {
-                this.schedules = new ReadOnlyCollection<JobScheduleElement>(schedules.ToList());
+                this.schedules = new ReadOnlyCollection<JobScheduleElement>(schedules != null ? schedules.ToList() : new List<JobScheduleElement>());
                 this.scheduledJobs = null;
             }
         }
@@ -330,6 +325,16 @@ namespace BlueCollar
 
                     if (!safely)
                     {
+                        lock (this.runLocker)
+                        {
+                            foreach (JobRun run in this.runs.GetRunning())
+                            {
+                                run.Abort();
+                            }
+
+                            this.runs.Flush();
+                        }
+
                         if (this.god != null && this.god.IsAlive)
                         {
                             try
@@ -504,26 +509,24 @@ namespace BlueCollar
 
             if (count > 0)
             {
+                DateTime now = DateTime.UtcNow;
+                long heartbeat = this.lastScheduleCheck == null ? this.Heartbeat : (long)Math.Ceiling(now.Subtract(this.lastScheduleCheck.Value).TotalMilliseconds);
+                this.lastScheduleCheck = now;
+
+                var scheduleNames = this.Schedules.Select(s => s.Name);
+                var records = this.store.GetLatestScheduledJobs(scheduleNames);
+                var tuples = ScheduledJobTuple.GetExecutableTuples(this.ScheduledJobs, records, now, heartbeat, count);
+
                 using (IJobStoreTransaction trans = this.store.BeginTransaction())
                 {
                     try
                     {
-                        DateTime now = DateTime.UtcNow;
-                        long heartbeat = this.lastScheduleCheck == null ? this.Heartbeat : (long)Math.Ceiling(now.Subtract(this.lastScheduleCheck.Value).TotalMilliseconds);
-                        this.lastScheduleCheck = now;
-
-                        var scheduleNames = this.Schedules.Select(s => s.Name);
-                        var records = this.store.GetLatestScheduledJobs(scheduleNames, trans);
-                        var tuples = ScheduledJobTuple.GetExecutableTuples(this.ScheduledJobs, records, now, heartbeat, count);
-
                         foreach (ScheduledJobTuple tuple in tuples)
                         {
                             JobRecord record = ScheduledJob.CreateRecord(tuple.Schedule, tuple.ScheduledJob, now);
-
-                            bool running = 0 < (from r in this.runs.GetAll()
-                                                where tuple.Schedule.Name.Equals(r.ScheduleName, StringComparison.OrdinalIgnoreCase) &&
-                                                      tuple.ScheduledJob.JobType.StartsWith(record.JobType, StringComparison.OrdinalIgnoreCase)
-                                                select r).Count();
+                            bool running = this.runs.GetAll().Any(
+                                r => tuple.Schedule.Name.Equals(r.ScheduleName, StringComparison.OrdinalIgnoreCase) &&
+                                     tuple.ScheduledJob.JobType.StartsWith(record.JobType, StringComparison.OrdinalIgnoreCase));
 
                             if (!running)
                             {
@@ -545,9 +548,7 @@ namespace BlueCollar
                                     record.Name = job.Name;
                                     record.JobType = JobRecord.JobTypeString(job);
                                     record.Data = job.Serialize();
-
-                                    // Save out of transaction to ensure it is peristed immediately.
-                                    this.store.SaveJob(record);
+                                    this.store.SaveJob(record, trans);
 
                                     JobRun run = new JobRun(record.Id.Value, job);
                                     run.Finished += new EventHandler<JobRunEventArgs>(this.JobRunFinished);
