@@ -6,13 +6,27 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <ConsoleDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Console</ConsoleDir>
     <ILMergePath>$(MSBuildProjectDirectory)\Tools\ILMerge\ILMerge.exe</ILMergePath>
+    <KeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</KeyFile>
     <LibDir>$(MSBuildProjectDirectory)\Lib</LibDir>
     <LibraryDir>$(MSBuildProjectDirectory)\Source\BlueCollar</LibraryDir>
     <ServiceDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Service</ServiceDir>
   </PropertyGroup>
+  
+  <Choose>
+    <When Condition="Exists('$(KeyFile)')">
+      <PropertyGroup>
+        <KeyFileArgs>/keyfile:"$(KeyFile)"</KeyFileArgs>
+        <SignAssembly>true</SignAssembly>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <SignAssembly>false</SignAssembly>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
 
   <ItemGroup>
-    <ProjectsToBuild Include="$(CommonDir)\BlueCollar.Common.csproj"/>
     <ProjectsToBuild Include="$(LibraryDir)\BlueCollar.csproj"/>
     <ProjectsToBuild Include="$(ConsoleDir)\BlueCollar.Console.csproj"/>
     <ProjectsToBuild Include="$(ServiceDir)\BlueCollar.Service.csproj"/>
@@ -21,9 +35,12 @@
   <Target Name="Build">
     <RemoveDir Directories="$(BuildDir)"/>
     <MakeDir Directories="$(BuildDir)"/>
-    <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration)"/>
+    <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile)"/>
 
     <Message Text="Merging dependencies into BlueCollar.dll..."/>
-    <Exec Command='"$(ILMergePath)" /ndebug /internalize /out:"$(BuildDir)\BlueCollar.dll" "$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll" "$(LibDir)\Mono.Security.dll" "$(LibDir)\Npgsql.dll"'/>
+    <Exec Command='"$(ILMergePath)" /ndebug /internalize $(KeyFileArgs) /out:"$(BuildDir)\BlueCollar.dll" "$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll" "$(LibDir)\Mono.Security.dll" "$(LibDir)\Npgsql.dll" "$(LibDir)\System.Data.SQLite.dll"'/>
+
+    <Copy SourceFiles="$(ConsoleDir)\bin\$(Configuration)\collar.exe" DestinationFolder="$(BuildDir)"/>
+    <Copy SourceFiles="$(ServiceDir)\bin\$(Configuration)\collar_service.exe" DestinationFolder="$(BuildDir)"/>
   </Target>
 </Project>

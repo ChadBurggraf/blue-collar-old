@@ -43,6 +43,7 @@
     <Reference Include="System.Data.SQLite, Version=1.0.66.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lib\System.Data.SQLite.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
@@ -74,6 +75,8 @@
     <Compile Include="JobRun.cs" />
     <Compile Include="JobRunEventArgs.cs" />
     <Compile Include="JobRunner.cs" />
+    <Compile Include="JobRunnerEventSink.cs" />
+    <Compile Include="JobRunnerProxy.cs" />
     <Compile Include="JobStatus.cs" />
     <Compile Include="JobStore.cs" />
     <Compile Include="MemoryJobStore.cs" />

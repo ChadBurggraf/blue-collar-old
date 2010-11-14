@@ -67,7 +67,6 @@ namespace BlueCollar
         /// </summary>
         public string PersistencePath { get; private set; }
 
-
         /// <summary>
         /// Gets all of the job runs this instance is maintaining.
         /// </summary>
@@ -126,6 +125,7 @@ namespace BlueCollar
         /// <summary>
         /// Flushes this instance's state to disk.
         /// </summary>
+        [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity", Justification = "Totally reviewed.")]
         public void Flush()
         {
             lock (this.runs)
@@ -167,6 +167,7 @@ namespace BlueCollar
         /// <param name="persistencPath">The persistenc path to load job runs from.</param>
         /// <returns>The loaded job run collection.</returns>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "It's not worth it to enumarte all of the possible failure scenarios. We're okay with failing in general.")]
+        [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity", Justification = "Totally reviewed.")]
         private static IEnumerable<JobRun> LoadFromPersisted(string persistencPath)
         {
             IEnumerable<JobRun> runs;

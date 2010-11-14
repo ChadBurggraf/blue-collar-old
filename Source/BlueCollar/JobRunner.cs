@@ -47,22 +47,21 @@ namespace BlueCollar
         public JobRunner(IJobStore store)
             : this(store, null)
         {
-            
         }
 
         /// <summary>
         /// Initializes a new instance of the JobRunner class.
         /// </summary>
         /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
-        /// <param name="runningJobsPersistencPath">The path to use when saving running jobs state to disk.</param>
-        public JobRunner(IJobStore store, string runningJobsPersistencPath)
+        /// <param name="runningJobsPersistencePath">The path to use when saving running jobs state to disk.</param>
+        public JobRunner(IJobStore store, string runningJobsPersistencePath)
         {
             if (store == null)
             {
                 throw new ArgumentNullException("store", "store cannot be null.");
             }
 
-            this.runs = new RunningJobs(runningJobsPersistencPath);
+            this.runs = new RunningJobs(runningJobsPersistencePath);
             this.store = store;
         }
 

@@ -2,6 +2,7 @@
 *.csproj.user
 *.config
 *.vsmdi
+*.snk
 StyleCop.Cache
 testimpactdata.sdf
 bin/

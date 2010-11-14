@@ -18,35 +18,8 @@ namespace BlueCollar
     /// </summary>
     public class MemoryJobStore : SQLiteJobStore
     {
-        private static string connectionString;
-        private static SQLiteConnection connection;
-
-        /// <summary>
-        /// Initializes static members of the MemoryJobStore class.
-        /// </summary>
-        static MemoryJobStore()
-        {
-            SQLiteConnectionStringBuilder builder = new SQLiteConnectionStringBuilder();
-            builder.DataSource = ":memory:";
-            connectionString = builder.ToString();
-            connection = new SQLiteConnection(connectionString);
-            connection.Open();
-
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandType = CommandType.Text;
-
-                using (Stream stream = typeof(SQLiteJobStore).Assembly.GetManifestResourceStream("BlueCollar.Sql.BlueCollar-SQLite.sql"))
-                {
-                    using (StreamReader reader = new StreamReader(stream))
-                    {
-                        command.CommandText = reader.ReadToEnd();
-                    }
-                }
-
-                command.ExecuteNonQuery();
-            }
-        }
+        private static string connectionString = CreateConnectionString();
+        private static SQLiteConnection connection = CreateConnection(connectionString);
 
         /// <summary>
         /// Initializes a new instance of the MemoryJobStore class.
@@ -79,6 +52,45 @@ namespace BlueCollar
         protected override DbConnection CreateAndOpenConnection()
         {
             return connection;
+        }
+
+        /// <summary>
+        /// Creates and opens the connection to use for the in-memory database.
+        /// </summary>
+        /// <param name="connectionString">The connection string to the database.</param>
+        /// <returns>A connection.</returns>
+        private static SQLiteConnection CreateConnection(string connectionString)
+        {
+            SQLiteConnection connection = new SQLiteConnection(connectionString);
+            connection.Open();
+
+            using (DbCommand command = connection.CreateCommand())
+            {
+                command.CommandType = CommandType.Text;
+
+                using (Stream stream = typeof(SQLiteJobStore).Assembly.GetManifestResourceStream("BlueCollar.Sql.BlueCollar-SQLite.sql"))
+                {
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        command.CommandText = reader.ReadToEnd();
+                    }
+                }
+
+                command.ExecuteNonQuery();
+            }
+
+            return connection;
+        }
+
+        /// <summary>
+        /// Creates the connection string to use when connecting to the in-memory database.
+        /// </summary>
+        /// <returns>A connection string.</returns>
+        private static string CreateConnectionString()
+        {
+            SQLiteConnectionStringBuilder builder = new SQLiteConnectionStringBuilder();
+            builder.DataSource = ":memory:";
+            return builder.ToString();
         }
     }
 }

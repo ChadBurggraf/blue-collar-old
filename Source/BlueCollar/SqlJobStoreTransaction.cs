@@ -57,12 +57,12 @@ namespace BlueCollar
         /// <summary>
         /// Gets or sets the connection the transaction is for.
         /// </summary>
-        public virtual DbConnection Connection { get; protected set; }
+        public DbConnection Connection { get; protected set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the transaction is active.
         /// </summary>
-        public virtual bool IsActive { get; protected set; }
+        public bool IsActive { get; protected set; }
 
         /// <summary>
         /// Gets the job store the transaction is for.
@@ -72,7 +72,7 @@ namespace BlueCollar
         /// <summary>
         /// Gets or sets the concrete transaction.
         /// </summary>
-        public virtual DbTransaction Transaction { get; protected set; }
+        public DbTransaction Transaction { get; protected set; }
 
         /// <summary>
         /// Commits the transaction.

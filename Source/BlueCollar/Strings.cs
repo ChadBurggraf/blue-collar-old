@@ -8,6 +8,7 @@ namespace BlueCollar
 {
     using System;
     using System.Configuration;
+    using System.Diagnostics.CodeAnalysis;
     using System.Security.Cryptography;
     using System.Text;
 
@@ -69,6 +70,7 @@ namespace BlueCollar
         /// <param name="value">The string to convert.</param>
         /// <param name="camel">A value indicating whether to convert to camelCalse. If false, will convert to PascalCase.</param>
         /// <returns>The converted string.</returns>
+        [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "Explicitly expecting a lowercase string.")]
         public static string FromLowercaseUnderscore(this string value, bool camel)
         {
             value = (value ?? String.Empty).ToLowerInvariant().Trim();

@@ -9,11 +9,13 @@ namespace BlueCollar
     using System;
     using System.Data;
     using System.Data.Common;
+    using System.Diagnostics.CodeAnalysis;
     using Npgsql;
 
     /// <summary>
     /// Implements <see cref="IJobStore"/> for PostgreSQL.
     /// </summary>
+    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "The spelling is correct.")]
     public class PostgresJobStore : SqlJobStore
     {
         /// <summary>

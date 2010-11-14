@@ -55,7 +55,7 @@ namespace BlueCollar
         /// <summary>
         /// Gets or sets the connection string to use when connecting to the database.
         /// </summary>
-        public virtual string ConnectionString { get; protected set; }
+        public string ConnectionString { get; protected set; }
 
         #endregion
 
@@ -511,7 +511,7 @@ namespace BlueCollar
                     {
                         if (reader.Read())
                         {
-                            record.Id = Convert.ToInt32(reader[0]);
+                            record.Id = Convert.ToInt32(reader[0], CultureInfo.InvariantCulture);
                         }
                     }
                 }
@@ -706,19 +706,19 @@ namespace BlueCollar
 
                         if (typeof(DateTime?).IsAssignableFrom(info.PropertyType))
                         {
-                            info.SetValue(record, new DateTime(Convert.ToDateTime(value).Ticks, DateTimeKind.Utc), null);
+                            info.SetValue(record, new DateTime(Convert.ToDateTime(value, CultureInfo.InvariantCulture).Ticks, DateTimeKind.Utc), null);
                         }
                         else if (typeof(JobStatus?).IsAssignableFrom(info.PropertyType))
                         {
-                            info.SetValue(record, Enum.Parse(typeof(JobStatus), Convert.ToString(value)), null);
+                            info.SetValue(record, Enum.Parse(typeof(JobStatus), Convert.ToString(value, CultureInfo.InvariantCulture)), null);
                         }
                         else if (typeof(int?).IsAssignableFrom(info.PropertyType))
                         {
-                            info.SetValue(record, Convert.ToInt32(value), null);
+                            info.SetValue(record, Convert.ToInt32(value, CultureInfo.InvariantCulture), null);
                         }
                         else if (typeof(string).IsAssignableFrom(info.PropertyType))
                         {
-                            info.SetValue(record, Convert.ToString(value), null);
+                            info.SetValue(record, Convert.ToString(value, CultureInfo.InvariantCulture), null);
                         }
                         else
                         {

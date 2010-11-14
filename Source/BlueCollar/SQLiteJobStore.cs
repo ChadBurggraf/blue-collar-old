@@ -8,6 +8,7 @@ namespace BlueCollar
 {
     using System;
     using System.Configuration;
+    using System.Diagnostics.CodeAnalysis;
     using System.Data;
     using System.Data.Common;
     using System.Data.SQLite;
@@ -17,6 +18,7 @@ namespace BlueCollar
     /// <summary>
     /// Implements <see cref="IJobStore"/> for SQLite.
     /// </summary>
+    [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "The spelling is correct.")]
     public class SQLiteJobStore : SqlJobStore
     {
         /// <summary>
