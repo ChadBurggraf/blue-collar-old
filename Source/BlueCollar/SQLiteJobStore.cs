@@ -61,19 +61,21 @@ namespace BlueCollar
             }
 
             string databasePath = null;
+            SQLiteConnectionStringBuilder builder;
 
             if (!String.IsNullOrEmpty(ConnectionString))
             {
-                SQLiteConnectionStringBuilder builder = new SQLiteConnectionStringBuilder(ConnectionString);
-                databasePath = builder.DataSource;
+                builder = new SQLiteConnectionStringBuilder(ConnectionString);
+                databasePath = ResolveDatabaseFilePath(builder.DataSource);
+                builder.DataSource = databasePath;
             }
             else
             {
-                SQLiteConnectionStringBuilder builder = new SQLiteConnectionStringBuilder();
-                databasePath = builder.DataSource = "BlueCollar.s3db";
-                ConnectionString = builder.ToString();
+                builder = new SQLiteConnectionStringBuilder();
+                databasePath = builder.DataSource = ResolveDatabaseFilePath("BlueCollar.s3db");
             }
 
+            this.ConnectionString = builder.ToString();
             EnsureDatabase(databasePath);
         }
 

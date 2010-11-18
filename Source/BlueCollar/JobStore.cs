@@ -82,7 +82,7 @@ namespace BlueCollar
             }
             else
             {
-                // TODO: SQLite job store.
+                store = new MemoryJobStore();
             }
 
             store.Initialize(element);

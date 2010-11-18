@@ -8,4 +8,6 @@ testimpactdata.sdf
 bin/
 obj/
 Build/
+TestApps/Lib/
+!TestApps/Source/Web40/Web.config
 TestResults/

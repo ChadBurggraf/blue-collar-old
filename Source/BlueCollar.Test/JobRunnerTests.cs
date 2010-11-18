@@ -44,8 +44,7 @@ namespace BlueCollar.Test
             originalHeartbeat = BlueCollarSection.Current.Heartbeat;
             BlueCollarSection.Current.Heartbeat = heartbeat;
 
-            jobStore = new MemoryJobStore();
-            jobStore.Initialize(null);
+            jobStore = JobStore.Create();
             jobStore.DeleteAllJobs();
 
             jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".xml");

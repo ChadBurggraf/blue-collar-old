@@ -3,17 +3,19 @@
   <PropertyGroup>
     <BuildDir>$(MSBuildProjectDirectory)\Build</BuildDir>
     <CommonDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Common</CommonDir>
-    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Configuration Condition="'$(Configuration)' == '' ">Release</Configuration>
     <ConsoleDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Console</ConsoleDir>
+    <EnableSigning Condition="'$(EnableSigning)' == ''">true</EnableSigning>
     <ILMergePath>$(MSBuildProjectDirectory)\Tools\ILMerge\ILMerge.exe</ILMergePath>
     <KeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</KeyFile>
     <LibDir>$(MSBuildProjectDirectory)\Lib</LibDir>
     <LibraryDir>$(MSBuildProjectDirectory)\Source\BlueCollar</LibraryDir>
     <ServiceDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Service</ServiceDir>
+    <TestAppsLibDir>$(MSBuildProjectDirectory)\TestApps\Lib</TestAppsLibDir>
   </PropertyGroup>
   
   <Choose>
-    <When Condition="Exists('$(KeyFile)')">
+    <When Condition="Exists('$(KeyFile)') And '$(EnableSigning)' == 'true'">
       <PropertyGroup>
         <KeyFileArgs>/keyfile:"$(KeyFile)"</KeyFileArgs>
         <SignAssembly>true</SignAssembly>
@@ -31,16 +33,36 @@
     <ProjectsToBuild Include="$(ConsoleDir)\BlueCollar.Console.csproj"/>
     <ProjectsToBuild Include="$(ServiceDir)\BlueCollar.Service.csproj"/>
   </ItemGroup>
-  
-  <Target Name="Build">
-    <RemoveDir Directories="$(BuildDir)"/>
+
+  <Target Name="Build" DependsOnTargets="Clean">
     <MakeDir Directories="$(BuildDir)"/>
     <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile)"/>
 
-    <Message Text="Merging dependencies into BlueCollar.dll..."/>
-    <Exec Command='"$(ILMergePath)" /ndebug /internalize $(KeyFileArgs) /out:"$(BuildDir)\BlueCollar.dll" "$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll" "$(LibDir)\Mono.Security.dll" "$(LibDir)\Npgsql.dll" "$(LibDir)\System.Data.SQLite.dll"'/>
+    <ItemGroup>
+      <LibraryLibs Include="$(LibDir)\System.Data.SQLite.dll"/>
+    </ItemGroup>
 
-    <Copy SourceFiles="$(ConsoleDir)\bin\$(Configuration)\collar.exe" DestinationFolder="$(BuildDir)"/>
+    <Message Text=" "/>
+    <Message Text="Merging dependencies into BlueCollar.dll..."/>
+    <Exec Command='"$(ILMergePath)" /internalize /xmldocs /targetplatform:v4,%windir%\Microsoft.NET\Framework\v4.0.30319 $(KeyFileArgs) /out:"$(BuildDir)\BlueCollar.dll" "$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll" "$(LibDir)\Mono.Security.dll" "$(LibDir)\Npgsql.dll"'/>
+    <Copy SourceFiles="@(LibraryLibs)" DestinationFolder="$(BuildDir)"/>
+    
+    <Message Text=" "/>
+    <Message Text="Merging dependencies into collar.exe..."/>
+    <Exec Command='"$(ILMergePath)" /ndebug /internalize /targetplatform:v4,%windir%\Microsoft.NET\Framework\v4.0.30319 $(KeyFileArgs) /out:"$(BuildDir)\collar.exe" "$(ConsoleDir)\bin\$(Configuration)\collar.exe" "$(LibDir)\NDesk.Options.dll" "$(LibDir)\NLog.dll"'/>
+    
     <Copy SourceFiles="$(ServiceDir)\bin\$(Configuration)\collar_service.exe" DestinationFolder="$(BuildDir)"/>
+    
+    <ItemGroup>
+      <TestAppsLib Include="$(BuildDir)\**\*.dll"/>
+      <TestAppsLib Include="$(BuildDir)\**\*.xml"/>
+      <TestAppsLib Include="$(BuildDir)\**\*.pdb"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(TestAppsLib)" DestinationFiles="@(TestAppsLib->'$(TestAppsLibDir)\%(RecursiveDir)%(Filename)%(Extension)')"/>
+  </Target>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=$(Configuration)"/>
+    <RemoveDir Directories="$(BuildDir)"/>
   </Target>
 </Project>

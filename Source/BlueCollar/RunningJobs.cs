@@ -68,6 +68,17 @@ namespace BlueCollar
         public string PersistencePath { get; private set; }
 
         /// <summary>
+        /// Clears all fo the job runs this instance is maintaining.
+        /// </summary>
+        public void Clear()
+        {
+            lock (this.runs)
+            {
+                this.runs.Clear();
+            }
+        }
+
+        /// <summary>
         /// Gets all of the job runs this instance is maintaining.
         /// </summary>
         /// <returns>A collection of job runs.</returns>

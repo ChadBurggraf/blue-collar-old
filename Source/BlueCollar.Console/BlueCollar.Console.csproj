@@ -34,6 +34,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NDesk.Options">
+      <HintPath>..\..\Lib\NDesk.Options.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -48,13 +55,20 @@
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
     <Compile Include="BlueCollarConsole.cs" />
+    <Compile Include="JobRunnerBootstraps.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FileSystemEventType.cs" />
+    <Compile Include="FileSystemWatcher.cs" />
+    <Compile Include="FileSystemWatcherMode.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
       <Project>{C648543C-C912-4F37-8CA5-F1D5E095B51F}</Project>
       <Name>BlueCollar</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

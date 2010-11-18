@@ -94,7 +94,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Gets the name of the <see cref="ImageRecord"/> property for the given database column name.
+        /// Gets the name of the <see cref="JobRecord"/> property for the given database column name.
         /// </summary>
         /// <param name="columnName">The column name to get the property name for.</param>
         /// <returns>A property name.</returns>

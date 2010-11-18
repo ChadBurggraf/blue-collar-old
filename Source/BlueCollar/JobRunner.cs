@@ -429,9 +429,9 @@ namespace BlueCollar
                 }
 
                 this.store.SaveJob(job.Record);
-                this.runs.Remove(job.Record.Id.Value);
             }
 
+            this.runs.Clear();
             this.runs.Flush();
         }
 

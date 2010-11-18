@@ -12,9 +12,11 @@ namespace BlueCollar
     using System.Data;
     using System.Data.Common;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Text;
+    using System.Text.RegularExpressions;
     using BlueCollar.Configuration;
 
     /// <summary>
@@ -72,6 +74,36 @@ namespace BlueCollar
         protected virtual string TableName
         {
             get { return "[BlueCollar]"; }
+        }
+
+        #endregion
+
+        #region Public Static Methods
+
+        /// <summary>
+        /// Resolves the path of the given database file, expanding out the |DataDirectory| directive if present.
+        /// </summary>
+        /// <param name="path">The database file path to resolve.</param>
+        /// <returns>The resolved path.</returns>
+        public static string ResolveDatabaseFilePath(string path)
+        {
+            const string DataDirectoryDirective = "|DataDirectory|";
+
+            if (!String.IsNullOrEmpty(path))
+            {
+                if (path.StartsWith(DataDirectoryDirective, StringComparison.OrdinalIgnoreCase))
+                {
+                    path = Path.Combine(
+                        AppDomain.CurrentDomain.BaseDirectory, 
+                        Path.Combine(
+                            "App_Data", 
+                            Regex.Replace(path.Substring(DataDirectoryDirective.Length), "@\\|/", Path.DirectorySeparatorChar.ToString())));
+                }
+
+                path = Path.GetFullPath(path);
+            }
+
+            return path;
         }
 
         #endregion
@@ -1034,7 +1066,7 @@ namespace BlueCollar
         protected abstract DbParameter ParameterWithValue(string name, object value);
 
         /// <summary>
-        /// Gets the name of the <see cref="ImageRecord"/> property for the given database column name.
+        /// Gets the name of the <see cref="JobRecord"/> property for the given database column name.
         /// </summary>
         /// <param name="columnName">The column name to get the property name for.</param>
         /// <returns>A property name.</returns>
