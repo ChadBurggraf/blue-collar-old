@@ -55,6 +55,12 @@ namespace BlueCollar
         public event EventHandler<JobRecordEventArgs> FinishJob;
 
         /// <summary>
+        /// Event raised when a failed or timed out job is enqueued for a retry.
+        /// </summary>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "The spelling is correct.")]
+        public event EventHandler<JobRecordEventArgs> RetryEnqueued;
+
+        /// <summary>
         /// Event raised when a job has been timed out.
         /// </summary>
         public event EventHandler<JobRecordEventArgs> TimeoutJob;
@@ -64,7 +70,7 @@ namespace BlueCollar
         #region Public Instance Methods
 
         /// <summary>
-        /// Fires <see cref="AllFinished"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="AllFinished"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
         public void FireAllFinished()
@@ -73,7 +79,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Fires <see cref="CancelJob"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="CancelJob"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         /// <param name="e">The event arguments.</param>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
@@ -83,7 +89,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Fires <see cref="DequeueJob"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="DequeueJob"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         /// <param name="e">The event arguments.</param>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
@@ -93,7 +99,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Fires <see cref="Error"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="Error"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         /// <param name="e">The event arguments.</param>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
@@ -103,7 +109,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Fires <see cref="ExecuteScheduledJob"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="ExecuteScheduledJob"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         /// <param name="e">The event arguments.</param>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
@@ -113,7 +119,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Fires <see cref="FinishJob"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="FinishJob"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         /// <param name="e">The event arguments.</param>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
@@ -123,7 +129,18 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Fires <see cref="TimeoutJob"/> this instance's original <see cref="AppDomain"/>.
+        /// Fires <see cref="RetryEnqueued"/> in this instance's original <see cref="AppDomain"/>.
+        /// </summary>
+        /// <param name="e">The event arguments.</param>
+        [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "The spelling is correct.")]
+        public void FireRetryEnqueued(JobRecordEventArgs e)
+        {
+            this.RaiseEvent(this.RetryEnqueued, e);
+        }
+
+        /// <summary>
+        /// Fires <see cref="TimeoutJob"/> in this instance's original <see cref="AppDomain"/>.
         /// </summary>
         /// <param name="e">The event arguments.</param>
         [SuppressMessage("Microsoft.Design", "CA1030:UseEventsWhereAppropriate", Justification = "Not appropriate.")]

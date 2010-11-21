@@ -8,10 +8,10 @@ namespace BlueCollar
 {
     using System;
     using System.Configuration;
-    using System.Diagnostics.CodeAnalysis;
     using System.Data;
     using System.Data.Common;
     using System.Data.SQLite;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using BlueCollar.Configuration;
 

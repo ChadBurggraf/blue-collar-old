@@ -177,6 +177,7 @@ namespace BlueCollar
         /// </summary>
         /// <param name="persistencePath">The persistence path to check read permissions for.</param>
         /// <returns>True if the appdomain can read, false otherwise.</returns>
+        [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity", Justification = "Totally reviewed.")]
         private static bool CanReadFromPersisted(string persistencePath)
         {
 #if NET35
@@ -193,6 +194,7 @@ namespace BlueCollar
         /// </summary>
         /// <param name="persistencePath">The persistence path to check read permissions for.</param>
         /// <returns>True if the appdomain can write, false otherwise.</returns>
+        [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity", Justification = "Totally reviewed.")]
         private static bool CanWriteToPersisted(string persistencePath)
         {
 #if NET35
@@ -205,8 +207,9 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Loads a collection of job runs for this instance's <see cref="PersistencePath"/>.
+        /// Loads a collection of job runs from the given persistence path.
         /// </summary>
+        /// <param name="persistencePath">The persistence path to load job runs from.</param>
         /// <returns>The loaded job run collection.</returns>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "It's not worth it to enumarte all of the possible failure scenarios. We're okay with failing in general.")]
         private static IEnumerable<JobRun> LoadFromPersisted(string persistencePath)

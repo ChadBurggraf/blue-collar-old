@@ -48,6 +48,17 @@ namespace BlueCollar.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the timeout (in milliseconds) to use when re-enqueing failed
+        /// jobs that have retries available.
+        /// </summary>
+        [ConfigurationProperty("retryTimeout", IsRequired = false, DefaultValue = 60000)]
+        public int RetryTimeout
+        {
+            get { return (int)this["retryTimeout"]; }
+            set { this["retryTimeout"] = value; }
+        }
+
+        /// <summary>
         /// Gets the configured collection of scheduled jobs.
         /// </summary>
         [ConfigurationProperty("schedules", IsRequired = false)]

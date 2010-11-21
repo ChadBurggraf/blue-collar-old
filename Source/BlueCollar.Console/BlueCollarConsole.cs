@@ -11,6 +11,7 @@ namespace BlueCollar.Console
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Security.Permissions;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
@@ -22,6 +23,8 @@ namespace BlueCollar.Console
     /// <summary>
     /// Blue Collar console main application class.
     /// </summary>
+    [PermissionSetAttribute(SecurityAction.LinkDemand, Name = "FullTrust")]
+    [PermissionSetAttribute(SecurityAction.InheritanceDemand, Name = "FullTrust")]
     public static class BlueCollarConsole
     {
         private static readonly Regex PathQuotesExp = new Regex(@"^[""']?([^""']*)[""']?$", RegexOptions.Compiled);
@@ -146,12 +149,12 @@ namespace BlueCollar.Console
         {
             if (autoReload)
             {
-                logger.Info("The job runner is restarting.");
+                logger.Info(CultureInfo.InvariantCulture, "The job runner is restarting.");
                 CreateAndPullUpBootstraps();
             }
             else
             {
-                logger.Info("All jobs have finished running. Stay classy, San Diego.");
+                logger.Info(CultureInfo.InvariantCulture, "All jobs have finished running. Stay classy, San Diego.");
 
                 inputThread.Abort();
                 exitHandle.Set();
@@ -165,7 +168,7 @@ namespace BlueCollar.Console
         /// <param name="e">The event arguments.</param>
         private static void BootstrapsCancelJob(object sender, JobRecordEventArgs e)
         {
-            logger.Info("Canceled '{0}' ({1})", e.Record.Name, e.Record.Id);
+            logger.Info(CultureInfo.InvariantCulture, "Canceled '{0}' ({1})", e.Record.Name, e.Record.Id);
         }
 
         /// <summary>
@@ -175,7 +178,7 @@ namespace BlueCollar.Console
         /// <param name="e">The event arguments.</param>
         private static void BootstrapsChangeDetected(object sender, FileSystemEventArgs e)
         {
-            logger.Info("A change was detected in '{0}'. The job runner is shutting down (it will be automatically re-started).", e.FullPath);
+            logger.Info(CultureInfo.InvariantCulture, "A change was detected in '{0}'. The job runner is shutting down (it will be automatically re-started).", e.FullPath);
         }
 
         /// <summary>
@@ -185,7 +188,7 @@ namespace BlueCollar.Console
         /// <param name="e">The event arguments.</param>
         private static void BootstrapsDequeueJob(object sender, JobRecordEventArgs e)
         {
-            logger.Info("Dequeued '{0}' ({1}).", e.Record.Name, e.Record.Id);
+            logger.Info(CultureInfo.InvariantCulture, "Dequeued '{0}' ({1}).", e.Record.Name, e.Record.Id);
         }
 
         /// <summary>
@@ -200,16 +203,16 @@ namespace BlueCollar.Console
                 var element = ExceptionXElement.Parse(e.Record.Exception);
                 string message = element.Descendants("Message").First().Value;
                 string stackTrace = element.Descendants("StackTrace").First().Value;
-                logger.Error("An error occurred during the run loop for '{0}' ({1}). The message received was: '{2}'", e.Record.Name, e.Record.Id, message);
+                logger.Error(CultureInfo.InvariantCulture, "An error occurred during the run loop for '{0}' ({1}). The message received was: '{2}'", e.Record.Name, e.Record.Id, message);
                 logger.Error(stackTrace);
             }
             else if (!String.IsNullOrEmpty(e.Record.Name))
             {
-                logger.Error("An error occurred during the run loop for '{0}' ({1}).", e.Record.Name, e.Record.Id);
+                logger.Error(CultureInfo.InvariantCulture, "An error occurred during the run loop for '{0}' ({1}).", e.Record.Name, e.Record.Id);
             }
             else if (e.Exception != null)
             {
-                logger.Error("An error occurred during the run loop. The message received was: '{0}'", e.Exception.Message);
+                logger.Error(CultureInfo.InvariantCulture, "An error occurred during the run loop. The message received was: '{0}'", e.Exception.Message);
                 logger.Error(e.Exception.StackTrace);
             }
             else
@@ -225,7 +228,7 @@ namespace BlueCollar.Console
         /// <param name="e">The event arguments.</param>
         private static void BootstrapsExecuteScheduledJob(object sender, JobRecordEventArgs e)
         {
-            logger.Info("Started execution of '{0}' ({1}) for schedule '{2}'.", e.Record.Name, e.Record.Id, e.Record.ScheduleName);
+            logger.Info(CultureInfo.InvariantCulture, "Started execution of '{0}' ({1}) for schedule '{2}'.", e.Record.Name, e.Record.Id, e.Record.ScheduleName);
         }
 
         /// <summary>
@@ -237,13 +240,23 @@ namespace BlueCollar.Console
         {
             if (e.Record.Status == JobStatus.Succeeded)
             {
-                logger.Info("'{0}' ({1}) completed successfully.", e.Record.Name, e.Record.Id);
+                logger.Info(CultureInfo.InvariantCulture, "'{0}' ({1}) completed successfully.", e.Record.Name, e.Record.Id);
             }
             else
             {
                 string message = ExceptionXElement.Parse(e.Record.Exception).Descendants("Message").First().Value;
-                logger.Error("'{0}' ({1}) failed with the message: {2}.", e.Record.Name, e.Record.Id, message);
+                logger.Error(CultureInfo.InvariantCulture, "'{0}' ({1}) failed with the message: {2}.", e.Record.Name, e.Record.Id, message);
             }
+        }
+
+        /// <summary>
+        /// Raises the boostraper's RetryEnqueued event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private static void BootstrapsRetryEnqueued(object sender, JobRecordEventArgs e)
+        {
+            logger.Info(CultureInfo.InvariantCulture, "Enqueued retry number {1} of job '{0}' ({2}). The retry is queued to execute in {3:N2} seconds.", e.Record.TryNumber, e.Record.Name, e.Record.Id, DateTime.UtcNow.Subtract(e.Record.QueueDate).TotalSeconds);
         }
 
         /// <summary>
@@ -253,7 +266,7 @@ namespace BlueCollar.Console
         /// <param name="e">The event arguments.</param>
         private static void BootstrapsTimeoutJob(object sender, JobRecordEventArgs e)
         {
-            logger.Error("Timed out '{0}' ({1}) because it was taking too long to finish.", e.Record.Name, e.Record.Id);
+            logger.Error(CultureInfo.InvariantCulture, "Timed out '{0}' ({1}) because it was taking too long to finish.", e.Record.Name, e.Record.Id);
         }
 
         /// <summary>
@@ -279,6 +292,7 @@ namespace BlueCollar.Console
                     bootstaps.Error += new EventHandler<JobErrorEventArgs>(BootstrapsError);
                     bootstaps.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(BootstrapsExecuteScheduledJob);
                     bootstaps.FinishJob += new EventHandler<JobRecordEventArgs>(BootstrapsFinishJob);
+                    bootstaps.RetryEnqueued += new EventHandler<JobRecordEventArgs>(BootstrapsRetryEnqueued);
                     bootstaps.TimeoutJob += new EventHandler<JobRecordEventArgs>(BootstrapsTimeoutJob);
                     bootstaps.PullUp();
 
@@ -297,7 +311,7 @@ namespace BlueCollar.Console
                 catch (Exception ex)
                 {
                     pullUpFailCount++;
-                    logger.Error("Failed to bootstrap a job runner at the destination with the message: {0}", ex.Message);
+                    logger.Error(CultureInfo.InvariantCulture, "Failed to bootstrap a job runner at the destination with the message: {0}", ex.Message);
                     logger.Error(ex.StackTrace);
                     TimeoutAndRetryPullUp();
                 }
@@ -374,7 +388,6 @@ namespace BlueCollar.Console
         /// <summary>
         /// Times out the current thread and retries <see cref="CreateAndPullUpBootstraps()"/> after the timeout is complete.
         /// </summary>
-        /// <param name="message">The error message to log.</param>
         private static void TimeoutAndRetryPullUp()
         {
             if (pullUpFailCount < 10)
@@ -394,7 +407,7 @@ namespace BlueCollar.Console
         /// <summary>
         /// <see cref="ThreadStart"/> delegate used to wait for console input without blocking.
         /// </summary>
-        /// <param name="obj">The <see cref="ThreadStart"/> state object.</param>
+        /// <param name="arg">The <see cref="ThreadStart"/> state object.</param>
         private static void WaitForInput(object arg)
         {
             while (true)

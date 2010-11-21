@@ -113,6 +113,12 @@ namespace BlueCollar.Console
         public event EventHandler<JobRecordEventArgs> FinishJob;
 
         /// <summary>
+        /// Event raised when a failed or timed out job is enqueued for a retry.
+        /// </summary>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "The spelling is correct.")]
+        public event EventHandler<JobRecordEventArgs> RetryEnqueued;
+
+        /// <summary>
         /// Event raised when a job has been timed out.
         /// </summary>
         public event EventHandler<JobRecordEventArgs> TimeoutJob;
@@ -273,8 +279,8 @@ namespace BlueCollar.Console
             string binPath = Path.Combine(this.BasePath, "bin");
             bool isWebApplication = 
                 (String.IsNullOrEmpty(this.ConfigurationFilePath) || 
-                    !String.IsNullOrEmpty(this.ConfigurationFilePath) && 
-                    "Web.config".Equals(Path.GetFileName(this.ConfigurationFilePath), StringComparison.OrdinalIgnoreCase)) &&
+                    (!String.IsNullOrEmpty(this.ConfigurationFilePath) && 
+                    "Web.config".Equals(Path.GetFileName(this.ConfigurationFilePath), StringComparison.OrdinalIgnoreCase))) &&
                 Directory.Exists(binPath);
 
             if (isWebApplication)
@@ -302,6 +308,7 @@ namespace BlueCollar.Console
             this.eventSink.Error += new EventHandler<JobErrorEventArgs>(this.ProxyError);
             this.eventSink.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(this.ProxyExecuteScheduledJob);
             this.eventSink.FinishJob += new EventHandler<JobRecordEventArgs>(this.ProxyFinishJob);
+            this.eventSink.RetryEnqueued += new EventHandler<JobRecordEventArgs>(this.ProxyRetryEnqueued);
             this.eventSink.TimeoutJob += new EventHandler<JobRecordEventArgs>(this.ProxyTimeoutJob);
             this.proxy.EventSink = this.eventSink;
 
@@ -388,6 +395,16 @@ namespace BlueCollar.Console
         private void ProxyFinishJob(object sender, JobRecordEventArgs e)
         {
             this.RaiseEvent(this.FinishJob, e);
+        }
+
+        /// <summary>
+        /// Raises the proxy's RetryEnqueued event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void ProxyRetryEnqueued(object sender, JobRecordEventArgs e)
+        {
+            this.RaiseEvent(this.RetryEnqueued, e);
         }
 
         /// <summary>

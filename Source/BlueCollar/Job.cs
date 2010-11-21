@@ -42,7 +42,7 @@ namespace BlueCollar
         /// When not overridden, defaults to 0 (no retries).
         /// </summary>
         [IgnoreDataMember]
-        public int Retries
+        public virtual int Retries
         {
             get { return 0; }
         }
@@ -56,6 +56,12 @@ namespace BlueCollar
         { 
             get { return 60000; }
         }
+
+        /// <summary>
+        /// Gets or sets the try number the job is executing for.
+        /// </summary>
+        [IgnoreDataMember]
+        public int TryNumber { get; set; }
 
         #endregion
 

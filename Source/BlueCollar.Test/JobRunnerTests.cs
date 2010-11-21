@@ -8,6 +8,7 @@ namespace BlueCollar.Test
 {
     using System;
     using System.Configuration;
+    using System.Linq;
     using System.Threading;
     using BlueCollar.Configuration;
     using BlueCollar.Test.TestJobs;
@@ -19,8 +20,9 @@ namespace BlueCollar.Test
     [TestClass]
     public class JobRunnerTests
     {
-        private const int heartbeat = 1000;
-        private static int originalHeartbeat;
+        private const int Heartbeat = 1000;
+        private const int RetryTimeout = 500;
+        private static int originalHeartbeat, originalRetryTimeout;
         private static IJobStore jobStore;
         private static JobRunner jobRunner;
 
@@ -32,6 +34,7 @@ namespace BlueCollar.Test
         {
             jobRunner.Stop(false);
             BlueCollarSection.Current.Heartbeat = originalHeartbeat;
+            BlueCollarSection.Current.RetryTimeout = originalRetryTimeout;
         }
 
         /// <summary>
@@ -42,14 +45,17 @@ namespace BlueCollar.Test
         public static void Initialize(TestContext context)
         {
             originalHeartbeat = BlueCollarSection.Current.Heartbeat;
-            BlueCollarSection.Current.Heartbeat = heartbeat;
+            originalRetryTimeout = BlueCollarSection.Current.RetryTimeout;
+            BlueCollarSection.Current.Heartbeat = Heartbeat;
+            BlueCollarSection.Current.RetryTimeout = RetryTimeout;
 
             jobStore = JobStore.Create();
             jobStore.DeleteAllJobs();
 
             jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".xml");
-            jobRunner.Heartbeat = heartbeat;
+            jobRunner.Heartbeat = Heartbeat;
             jobRunner.MaximumConcurrency = 25;
+            jobRunner.RetryTimeout = RetryTimeout;
             jobRunner.SetSchedules(null);
             jobRunner.Error += new EventHandler<JobErrorEventArgs>(JobRunnerError);
             jobRunner.Start();
@@ -62,14 +68,14 @@ namespace BlueCollar.Test
         public void JobRunnerCancelJobs()
         {
             var id = new TestSlowJob().Enqueue(jobStore).Id.Value;
-            Thread.Sleep(heartbeat * 2);
+            Thread.Sleep(Heartbeat * 2);
 
             var record = jobStore.GetJob(id);
             Assert.AreEqual(JobStatus.Started, record.Status);
 
             record.Status = JobStatus.Canceling;
             jobStore.SaveJob(record);
-            Thread.Sleep(heartbeat * 2);
+            Thread.Sleep(Heartbeat * 2);
 
             Assert.AreEqual(JobStatus.Canceled, jobStore.GetJob(id).Status);
         }
@@ -81,7 +87,7 @@ namespace BlueCollar.Test
         public void JobRunnerDequeueJobs()
         {
             var id = new TestSlowJob().Enqueue(jobStore).Id.Value;
-            Thread.Sleep(heartbeat * 2);
+            Thread.Sleep(Heartbeat * 2);
 
             Assert.AreEqual(JobStatus.Started, jobStore.GetJob(id).Status);
         }
@@ -96,21 +102,21 @@ namespace BlueCollar.Test
             {
                 Name = "___TEST_SCHED_1___" + Guid.NewGuid().ToString(),
                 RepeatHours = 24,
-                StartOn = DateTime.UtcNow.AddYears(-1).AddMilliseconds(heartbeat)
+                StartOn = DateTime.UtcNow.AddYears(-1).AddMilliseconds(Heartbeat)
             };
 
             JobScheduleElement sched2 = new JobScheduleElement()
             {
                 Name = "___TEST_SCHED_2___" + Guid.NewGuid().ToString(),
                 RepeatHours = .5,
-                StartOn = DateTime.UtcNow.AddDays(-1).AddMilliseconds(heartbeat)
+                StartOn = DateTime.UtcNow.AddDays(-1).AddMilliseconds(Heartbeat)
             };
 
             JobScheduleElement sched3 = new JobScheduleElement()
             {
                 Name = "___TEST_SCHED_3___" + Guid.NewGuid().ToString(),
                 RepeatHours = .5,
-                StartOn = DateTime.UtcNow.AddDays(1).AddMilliseconds(heartbeat)
+                StartOn = DateTime.UtcNow.AddDays(1).AddMilliseconds(Heartbeat)
             };
 
             JobScheduledJobElement job1 = new JobScheduledJobElement()
@@ -129,11 +135,28 @@ namespace BlueCollar.Test
             sched3.ScheduledJobs.Add(job1);
 
             jobRunner.SetSchedules(new JobScheduleElement[] { sched1, sched2, sched3 });
-            Thread.Sleep(heartbeat * 2);
+            Thread.Sleep(Heartbeat * 2);
 
             Assert.AreEqual(2, jobStore.GetJobCount(null, null, sched1.Name));
             Assert.AreEqual(1, jobStore.GetJobCount(null, null, sched2.Name));
             Assert.AreEqual(0, jobStore.GetJobCount(null, null, sched3.Name));
+        }
+
+        /// <summary>
+        /// Retry failed jobs tests.
+        /// </summary>
+        [TestMethod]
+        public void JobRunnerRetryFailedJobs()
+        {
+            IJob job = new TestFailRetryJob();
+            job.Enqueue(jobStore);
+            Thread.Sleep(Heartbeat * 3);
+
+            var jobs = jobStore.GetJobs(job.Name, null, null, JobRecordResultsOrderBy.QueueDate, false, 1, 100);
+            Assert.AreEqual(2, jobs.Count());
+            Assert.AreEqual(JobStatus.Failed, jobs.First().Status);
+            Assert.AreEqual(JobStatus.Succeeded, jobs.Last().Status);
+            Assert.AreEqual(2, jobs.Last().TryNumber);
         }
 
         /// <summary>
@@ -143,7 +166,7 @@ namespace BlueCollar.Test
         public void JobRunnerFinishJobs()
         {
             var id = new TestQuickJob().Enqueue(jobStore).Id.Value;
-            Thread.Sleep(heartbeat * 2);
+            Thread.Sleep(Heartbeat * 2);
 
             Assert.AreEqual(JobStatus.Succeeded, jobStore.GetJob(id).Status);
         }
@@ -155,7 +178,7 @@ namespace BlueCollar.Test
         public void JobRunnerTimeoutJobs()
         {
             var id = new TestTimeoutJob().Enqueue(jobStore).Id.Value;
-            Thread.Sleep(heartbeat * 2);
+            Thread.Sleep(Heartbeat * 2);
 
             Assert.AreEqual(JobStatus.TimedOut, jobStore.GetJob(id).Status);
         }
@@ -167,12 +190,15 @@ namespace BlueCollar.Test
         /// <param name="e">The event arguments.</param>
         private static void JobRunnerError(object sender, JobErrorEventArgs e)
         {
-            if (e.Exception != null)
+            if (!e.Record.JobType.StartsWith(JobRecord.JobTypeString(typeof(TestFailRetryJob)), StringComparison.Ordinal))
             {
-                Assert.Fail(e.Exception.Message + "\n" + e.Exception.StackTrace);
-            }
+                if (e.Exception != null)
+                {
+                    Assert.Fail(e.Exception.Message + "\n" + e.Exception.StackTrace);
+                }
 
-            Assert.Fail(Environment.StackTrace);
+                Assert.Fail(Environment.StackTrace);
+            }
         }
     }
 }

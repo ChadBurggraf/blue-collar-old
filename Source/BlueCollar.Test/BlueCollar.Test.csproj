@@ -61,6 +61,7 @@
     <Compile Include="RunningJobsTests.cs" />
     <Compile Include="SQLiteJobStoreTests.cs" />
     <Compile Include="SqlServerJobStoreTests.cs" />
+    <Compile Include="TestJobs\TestFailRetryJob.cs" />
     <Compile Include="TestJobs\TestIdJob.cs" />
     <Compile Include="TestJobs\TestQuickJob.cs" />
     <Compile Include="TestJobs\TestScheduledJob.cs" />

@@ -33,7 +33,7 @@ namespace BlueCollar
         private RunningJobs runs;
         private IJobStore store;
         private Thread god;
-        private int heartbeat, maximumConcurrency;
+        private int heartbeat, maximumConcurrency, retryTimeout;
         private DateTime? lastScheduleCheck;
 
         #endregion
@@ -106,6 +106,12 @@ namespace BlueCollar
         public event EventHandler<JobRecordEventArgs> FinishJob;
 
         /// <summary>
+        /// Event raised when a failed or timed out job is enqueued for a retry.
+        /// </summary>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "The spelling is correct.")]
+        public event EventHandler<JobRecordEventArgs> RetryEnqueued;
+
+        /// <summary>
         /// Event raised when a job has been timed out.
         /// </summary>
         public event EventHandler<JobRecordEventArgs> TimeoutJob;
@@ -128,6 +134,7 @@ namespace BlueCollar
                         defaultRunner = new JobRunner(JobStore.Current);
                         defaultRunner.Heartbeat = BlueCollarSection.Current.Heartbeat;
                         defaultRunner.MaximumConcurrency = BlueCollarSection.Current.MaximumConcurrency;
+                        defaultRunner.RetryTimeout = BlueCollarSection.Current.RetryTimeout;
                         defaultRunner.SetSchedules(BlueCollarSection.Current.Schedules);
                     }
 
@@ -216,6 +223,33 @@ namespace BlueCollar
                     }
 
                     this.maximumConcurrency = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the timeout, in milliseconds, to wait before retrying a failed job.
+        /// </summary>
+        public int RetryTimeout
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    return this.retryTimeout;
+                }
+            }
+
+            set
+            {
+                lock (this.stateLocker)
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentException("value must be greater than or equal to 0.", "value");
+                    }
+
+                    this.retryTimeout = value;
                 }
             }
         }
@@ -500,6 +534,24 @@ namespace BlueCollar
         }
 
         /// <summary>
+        /// Re-enqueues a job for a retry if more retries are available.
+        /// </summary>
+        /// <param name="job">The job to re-enqueue.</param>
+        /// <param name="trans">The transaction to use when saving the new job record, if applicable.</param>
+        private void EnqueueJobForRetry(IJob job, IJobStoreTransaction trans)
+        {
+            if (job != null && job.TryNumber <= job.Retries)
+            {
+                JobRecord record = job.CreateRecord();
+                record.TryNumber = job.TryNumber + 1;
+                record.QueueDate = DateTime.UtcNow.AddMilliseconds(this.RetryTimeout);
+                this.store.SaveJob(record, trans);
+
+                this.RaiseEvent(this.RetryEnqueued, new JobRecordEventArgs(record));
+            }
+        }
+
+        /// <summary>
         /// Executes any scheduled jobs that are due.
         /// </summary>
         private void ExecuteScheduledJobs()
@@ -595,6 +647,7 @@ namespace BlueCollar
                 record.Status = JobStatus.Failed;
 
                 this.RaiseEvent(this.Error, new JobErrorEventArgs(record, run.ExecutionException));
+                this.EnqueueJobForRetry(run.Job, trans);
             }
             else if (run.WasRecovered)
             {
@@ -776,6 +829,7 @@ namespace BlueCollar
                             this.store.SaveJob(job.Record, trans);
                             this.runs.Remove(job.Record.Id.Value);
 
+                            this.EnqueueJobForRetry(job.Run.Job, trans);
                             this.RaiseEvent(this.TimeoutJob, new JobRecordEventArgs(job.Record));
                         }
                     }

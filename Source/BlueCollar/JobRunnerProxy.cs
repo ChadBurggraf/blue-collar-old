@@ -58,6 +58,7 @@ namespace BlueCollar
                 runner.Error += new EventHandler<JobErrorEventArgs>(this.JobRunnerError);
                 runner.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerExecuteScheduledJob);
                 runner.FinishJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerFinishJob);
+                runner.RetryEnqueued += new EventHandler<JobRecordEventArgs>(this.JobRunnerRetryEnqueued);
                 runner.TimeoutJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerTimeoutJob);
 
                 this.isGreen = false;
@@ -172,6 +173,22 @@ namespace BlueCollar
                 if (this.EventSink != null)
                 {
                     this.EventSink.FireFinishJob(e);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Raises the JobRunner's RetryEnqueued event.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void JobRunnerRetryEnqueued(object sender, JobRecordEventArgs e)
+        {
+            lock (this)
+            {
+                if (this.EventSink != null)
+                {
+                    this.EventSink.FireRetryEnqueued(e);
                 }
             }
         }

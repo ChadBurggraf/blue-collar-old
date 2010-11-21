@@ -93,11 +93,8 @@ namespace BlueCollar
             {
                 if (path.StartsWith(DataDirectoryDirective, StringComparison.OrdinalIgnoreCase))
                 {
-                    path = Path.Combine(
-                        AppDomain.CurrentDomain.BaseDirectory, 
-                        Path.Combine(
-                            "App_Data", 
-                            Regex.Replace(path.Substring(DataDirectoryDirective.Length), "@\\|/", Path.DirectorySeparatorChar.ToString())));
+                    path = Regex.Replace(path.Substring(DataDirectoryDirective.Length), "@\\|/", Path.DirectorySeparatorChar.ToString());
+                    path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.Combine("App_Data", path));
                 }
 
                 path = Path.GetFullPath(path);

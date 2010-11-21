@@ -30,6 +30,11 @@ namespace BlueCollar
         long Timeout { get; }
 
         /// <summary>
+        /// Gets or sets the try number the job is executing for.
+        /// </summary>
+        int TryNumber { get; set; }
+
+        /// <summary>
         /// Creates a new job record representing an enqueue-able state for this instance.
         /// </summary>
         /// <returns>The created job record.</returns>

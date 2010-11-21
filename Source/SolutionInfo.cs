@@ -7,6 +7,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security;
 
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Tasty Codes")]
@@ -18,3 +19,6 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("0.6.0.0")]
 [assembly: AssemblyFileVersion("0.6.0.0")]
+#if NET40
+[assembly: SecurityRules(SecurityRuleSet.Level1)]
+#endif

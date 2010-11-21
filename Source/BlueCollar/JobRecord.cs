@@ -155,7 +155,9 @@ namespace BlueCollar
                 {
                     using (XmlReader xr = new XmlTextReader(sr))
                     {
-                        return (IJob)serializer.ReadObject(xr);
+                        IJob job = (IJob)serializer.ReadObject(xr);
+                        job.TryNumber = this.TryNumber;
+                        return job;
                     }
                 }
             }

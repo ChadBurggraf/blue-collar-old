@@ -21,6 +21,7 @@
   <IgnoreGeneratedCode>False</IgnoreGeneratedCode>
  </ProjectOptions>
  <Targets>
+  <Target Name="$(ProjectDir)/BlueCollar.Console/bin/Debug/collar.exe" Analyze="True" AnalyzeAllChildren="True" />
   <Target Name="$(ProjectDir)/BlueCollar/bin/Debug/BlueCollar.dll" Analyze="True" AnalyzeAllChildren="True" />
  </Targets>
  <Rules>
@@ -39,5 +40,55 @@
   <Groups />
   <Settings />
  </Rules>
- <FxCopReport Version="10.0" />
+ <FxCopReport Version="10.0">
+  <Targets>
+   <Target Name="$(ProjectDir)/BlueCollar.Console/bin/Debug/collar.exe">
+    <Modules>
+     <Module Name="collar.exe">
+      <Namespaces>
+       <Namespace Name="BlueCollar.Console">
+        <Types>
+         <Type Name="BlueCollarConsole">
+          <Messages>
+           <Message TypeName="SecurityRuleSetLevel2MethodsShouldNotBeProtectedWithLinkDemandsFxCopRule" Category="Microsoft.Security" CheckId="CA2135" Created="2010-11-21 23:11:41Z">
+            <Issue>
+             <Item>'BlueCollarConsole'</Item>
+             <Item>'PermissionSetAttribute'</Item>
+            </Issue>
+           </Message>
+          </Messages>
+         </Type>
+         <Type Name="FileSystemWatcher">
+          <Messages>
+           <Message TypeName="SecurityRuleSetLevel2MethodsShouldNotBeProtectedWithLinkDemandsFxCopRule" Category="Microsoft.Security" CheckId="CA2135" Created="2010-11-21 22:40:31Z">
+            <Issue>
+             <Item>'FileSystemWatcher'</Item>
+             <Item>'PermissionSetAttribute'</Item>
+            </Issue>
+           </Message>
+          </Messages>
+         </Type>
+         <Type Name="JobRunnerBootstraps">
+          <Messages>
+           <Message TypeName="SecurityRuleSetLevel2MethodsShouldNotBeProtectedWithLinkDemandsFxCopRule" Category="Microsoft.Security" CheckId="CA2135" Created="2010-11-21 22:40:31Z">
+            <Issue>
+             <Item>'JobRunnerBootstraps'</Item>
+             <Item>'PermissionSetAttribute'</Item>
+            </Issue>
+           </Message>
+          </Messages>
+         </Type>
+        </Types>
+       </Namespace>
+      </Namespaces>
+     </Module>
+    </Modules>
+   </Target>
+  </Targets>
+  <Rules>
+   <Rule TypeName="SecurityRuleSetLevel2MethodsShouldNotBeProtectedWithLinkDemandsFxCopRule" Category="Microsoft.Security" CheckId="CA2135">
+    <Resolution Name="Default">{0} is protected with a LinkDemand for {1}.  In the level 2 security rule set, it should be protected by being security critical instead.  Remove the LinkDemand and mark {0} security critical.</Resolution>
+   </Rule>
+  </Rules>
+ </FxCopReport>
 </FxCopProject>
