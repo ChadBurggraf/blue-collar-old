@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <configSections>
+    <section name="blueCollar" type="BlueCollar.Configuration.BlueCollarSection, BlueCollar"/>
+  </configSections>
+  <appSettings>
+    <add key="PostgresConnectionString" value=""/>
+    <add key="SqlServerConnectionString" value=""/>
+  </appSettings>
+  <blueCollar>
+    <store type="BlueCollar.SQLiteJobStore, BlueCollar"/>
+  </blueCollar>
+</configuration>

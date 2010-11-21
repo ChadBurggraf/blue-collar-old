@@ -71,7 +71,7 @@
       <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.pdb"/>
       <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.xml"/>
       <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe"/>
-      <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe.config"/>
+      <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe.config" Condition="'$(MSBuildToolsVersion)' != '3.5'"/>
       <BuildOutputs Include="$(ServiceDir)\bin\$(Configuration)\collar_service.exe"/>
     </ItemGroup>
     <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(BuildDir)"/>
