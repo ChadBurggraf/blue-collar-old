@@ -163,9 +163,9 @@ namespace BlueCollar
                 double milliseconds = now.Subtract(element.StartOn).TotalMilliseconds;
                 double repeatMilliseconds = element.RepeatHours * 3600000;
                 int repeats = (int)Math.Floor(milliseconds / repeatMilliseconds);
-                DateTime next = element.StartOn.AddMilliseconds(repeats * repeatMilliseconds);
+                DateTime next = element.StartOn.AddMilliseconds((repeats + 1) * repeatMilliseconds);
 
-                shouldExecute = next >= now.AddMilliseconds(heartbeat * -1) && next < now.AddMilliseconds(heartbeat);
+                shouldExecute = next < now.AddMilliseconds(heartbeat);
             }
 
             return shouldExecute;

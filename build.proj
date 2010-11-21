@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <BuildDir>$(MSBuildProjectDirectory)\Build</BuildDir>
+    <BuildDir>$(MSBuildProjectDirectory)\Build\$(MSBuildToolsVersion)</BuildDir>
     <CommonDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Common</CommonDir>
     <Configuration Condition="'$(Configuration)' == '' ">Release</Configuration>
     <ConsoleDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Console</ConsoleDir>
@@ -11,7 +11,7 @@
     <LibDir>$(MSBuildProjectDirectory)\Lib</LibDir>
     <LibraryDir>$(MSBuildProjectDirectory)\Source\BlueCollar</LibraryDir>
     <ServiceDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Service</ServiceDir>
-    <TestAppsLibDir>$(MSBuildProjectDirectory)\TestApps\Lib</TestAppsLibDir>
+    <TestAppsDir>$(MSBuildProjectDirectory)\TestApps</TestAppsDir>
   </PropertyGroup>
   
   <Choose>
@@ -28,6 +28,29 @@
     </Otherwise>
   </Choose>
 
+  <Choose>
+    <When Condition="'$(MSBuildToolsVersion)' == '3.5'">
+      <PropertyGroup>
+        <DefineConstants>DEBUG;CODE_ANALYSIS;NET35</DefineConstants>
+        <TargetPlatformArgs></TargetPlatformArgs>
+        <TestWebAppPath>$(TestAppsDir)\Web35</TestWebAppPath>
+      </PropertyGroup>
+      <ItemGroup>
+        <TestAppProjects Include="$(TestAppsDir)\Web35\Web35.csproj"/>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <DefineConstants>RELEASE;NET40</DefineConstants>
+        <TargetPlatformArgs>/targetplatform:v4,%windir%\Microsoft.NET\Framework\v4.0.30319</TargetPlatformArgs>
+        <TestWebAppPath>$(TestAppsDir)\Web35</TestWebAppPath>
+      </PropertyGroup>
+      <ItemGroup>
+        <TestAppProjects Include="$(TestAppsDir)\Web40\Web40.csproj"/>
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
   <ItemGroup>
     <ProjectsToBuild Include="$(LibraryDir)\BlueCollar.csproj"/>
     <ProjectsToBuild Include="$(ConsoleDir)\BlueCollar.Console.csproj"/>
@@ -36,33 +59,35 @@
 
   <Target Name="Build" DependsOnTargets="Clean">
     <MakeDir Directories="$(BuildDir)"/>
-    <MSBuild Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile)"/>
+    <MSBuild  Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile);DefineConstants=$(DefineConstants)"  ToolsVersion="$(MSBuildToolsVersion)"/>
 
     <ItemGroup>
-      <LibraryLibs Include="$(LibDir)\System.Data.SQLite.dll"/>
+      <BuildOutputs Include="$(LibDir)\Mono.Security.dll"/>
+      <BuildOutputs Include="$(LibDir)\NDesk.Options.dll"/>
+      <BuildOutputs Include="$(LibDir)\NLog.dll"/>
+      <BuildOutputs Include="$(LibDir)\Npgsql.dll"/>
+      <BuildOutputs Include="$(LibDir)\System.Data.SQLite.dll"/>
+      <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll"/>
+      <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.pdb"/>
+      <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.xml"/>
+      <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe"/>
+      <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe.config"/>
+      <BuildOutputs Include="$(ServiceDir)\bin\$(Configuration)\collar_service.exe"/>
     </ItemGroup>
+    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(BuildDir)"/>
 
-    <Message Text=" "/>
-    <Message Text="Merging dependencies into BlueCollar.dll..."/>
-    <Exec Command='"$(ILMergePath)" /internalize /xmldocs /targetplatform:v4,%windir%\Microsoft.NET\Framework\v4.0.30319 $(KeyFileArgs) /out:"$(BuildDir)\BlueCollar.dll" "$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll" "$(LibDir)\Mono.Security.dll" "$(LibDir)\Npgsql.dll"'/>
-    <Copy SourceFiles="@(LibraryLibs)" DestinationFolder="$(BuildDir)"/>
-    
-    <Message Text=" "/>
-    <Message Text="Merging dependencies into collar.exe..."/>
-    <Exec Command='"$(ILMergePath)" /ndebug /internalize /targetplatform:v4,%windir%\Microsoft.NET\Framework\v4.0.30319 $(KeyFileArgs) /out:"$(BuildDir)\collar.exe" "$(ConsoleDir)\bin\$(Configuration)\collar.exe" "$(LibDir)\NDesk.Options.dll" "$(LibDir)\NLog.dll"'/>
-    
-    <Copy SourceFiles="$(ServiceDir)\bin\$(Configuration)\collar_service.exe" DestinationFolder="$(BuildDir)"/>
-    
-    <ItemGroup>
-      <TestAppsLib Include="$(BuildDir)\**\*.dll"/>
-      <TestAppsLib Include="$(BuildDir)\**\*.xml"/>
-      <TestAppsLib Include="$(BuildDir)\**\*.pdb"/>
-    </ItemGroup>
-    <Copy SourceFiles="@(TestAppsLib)" DestinationFiles="@(TestAppsLib->'$(TestAppsLibDir)\%(RecursiveDir)%(Filename)%(Extension)')"/>
+    <CallTarget Targets="BuildTestApps"/>
+  </Target>
+
+  <Target Name="BuildTestApps">
+    <Delete Files="$(TestWebAppPath)\App_Data\BlueCollar.s3db"/>
+    <MakeDir Directories="$(TestWebAppPath)\App_Data"/>
+    <Copy SourceFiles="$(LibraryDir)\BlueCollar.s3db" DestinationFolder="$(TestWebAppPath)\App_Data"/>
+    <MSBuild Projects="@(TestAppProjects)" Targets="Clean;Build"/>
   </Target>
 
   <Target Name="Clean">
-    <MSBuild Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=$(Configuration)"/>
+    <MSBuild Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=$(Configuration);DefineConstants=$(DefineConstants)" ToolsVersion="$(MSBuildToolsVersion)"/>
     <RemoveDir Directories="$(BuildDir)"/>
   </Target>
 </Project>

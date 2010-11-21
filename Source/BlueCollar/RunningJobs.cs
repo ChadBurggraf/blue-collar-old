@@ -143,7 +143,7 @@ namespace BlueCollar
             {
                 lock (persistenceFileLocker)
                 {
-                    if (SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Write, this.PersistencePath)))
+                    if (CanWriteToPersisted(this.PersistencePath))
                     {
                         var exceptionTypes = (from r in this.runs
                                               where r.ExecutionException != null
@@ -173,27 +173,57 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Loads a collection of job runs from the given persistence path.
+        /// Gets a value indicating whether the current appdomain can read from the persistence path.
         /// </summary>
-        /// <param name="persistencPath">The persistenc path to load job runs from.</param>
+        /// <param name="persistencePath">The persistence path to check read permissions for.</param>
+        /// <returns>True if the appdomain can read, false otherwise.</returns>
+        private static bool CanReadFromPersisted(string persistencePath)
+        {
+#if NET35
+            return SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Read, persistencePath));   
+#else
+            PermissionSet ps = new PermissionSet(PermissionState.None);
+            ps.AddPermission(new FileIOPermission(FileIOPermissionAccess.Read, persistencePath));
+            return ps.IsSubsetOf(AppDomain.CurrentDomain.PermissionSet);
+#endif
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the current appdomain can write to the persistence path.
+        /// </summary>
+        /// <param name="persistencePath">The persistence path to check read permissions for.</param>
+        /// <returns>True if the appdomain can write, false otherwise.</returns>
+        private static bool CanWriteToPersisted(string persistencePath)
+        {
+#if NET35
+            return SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Write, persistencePath));   
+#else
+            PermissionSet ps = new PermissionSet(PermissionState.None);
+            ps.AddPermission(new FileIOPermission(FileIOPermissionAccess.Write, persistencePath));
+            return ps.IsSubsetOf(AppDomain.CurrentDomain.PermissionSet);
+#endif
+        }
+
+        /// <summary>
+        /// Loads a collection of job runs for this instance's <see cref="PersistencePath"/>.
+        /// </summary>
         /// <returns>The loaded job run collection.</returns>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "It's not worth it to enumarte all of the possible failure scenarios. We're okay with failing in general.")]
-        [SuppressMessage("Microsoft.Security", "CA2103:ReviewImperativeSecurity", Justification = "Totally reviewed.")]
-        private static IEnumerable<JobRun> LoadFromPersisted(string persistencPath)
+        private static IEnumerable<JobRun> LoadFromPersisted(string persistencePath)
         {
             IEnumerable<JobRun> runs;
 
             lock (persistenceFileLocker)
             {
-                if (SecurityManager.IsGranted(new FileIOPermission(FileIOPermissionAccess.Read, persistencPath)))
+                if (CanReadFromPersisted(persistencePath))
                 {
-                    if (File.Exists(persistencPath))
+                    if (File.Exists(persistencePath))
                     {
                         DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]));
 
                         try
                         {
-                            using (FileStream stream = File.OpenRead(persistencPath))
+                            using (FileStream stream = File.OpenRead(persistencePath))
                             {
                                 runs = (JobRun[])serializer.ReadObject(stream);
                             }

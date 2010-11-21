@@ -251,6 +251,11 @@ namespace BlueCollar.Console
         /// </summary>
         private void LoadAndStartAppDomain()
         {
+            if (!Path.IsPathRooted(this.BasePath))
+            {
+                this.BasePath = Path.GetFullPath(this.BasePath);
+            }
+
             AppDomainSetup setup = new AppDomainSetup();
             setup.ApplicationBase = this.BasePath;
             setup.ShadowCopyFiles = "true";
@@ -279,6 +284,11 @@ namespace BlueCollar.Console
 
             if (!String.IsNullOrEmpty(this.ConfigurationFilePath))
             {
+                if (!Path.IsPathRooted(this.ConfigurationFilePath))
+                {
+                    this.ConfigurationFilePath = Path.GetFullPath(this.ConfigurationFilePath);
+                }
+
                 setup.ConfigurationFile = this.ConfigurationFilePath;
             }
 

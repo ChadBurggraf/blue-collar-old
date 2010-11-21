@@ -200,7 +200,8 @@ namespace BlueCollar.Console
                 var element = ExceptionXElement.Parse(e.Record.Exception);
                 string message = element.Descendants("Message").First().Value;
                 string stackTrace = element.Descendants("StackTrace").First().Value;
-                logger.Error("An error occurred during the run loop for '{0}' ({1}). The message received was: '{2}'\n{3}", e.Record.Name, e.Record.Id, message, stackTrace);
+                logger.Error("An error occurred during the run loop for '{0}' ({1}). The message received was: '{2}'", e.Record.Name, e.Record.Id, message);
+                logger.Error(stackTrace);
             }
             else if (!String.IsNullOrEmpty(e.Record.Name))
             {
@@ -208,7 +209,8 @@ namespace BlueCollar.Console
             }
             else if (e.Exception != null)
             {
-                logger.Error("An error occurred during the run loop. The message received was: '{0}'\n{1}", e.Exception.Message, e.Exception.StackTrace);
+                logger.Error("An error occurred during the run loop. The message received was: '{0}'", e.Exception.Message);
+                logger.Error(e.Exception.StackTrace);
             }
             else
             {
@@ -281,12 +283,23 @@ namespace BlueCollar.Console
                     bootstaps.PullUp();
 
                     pullUpFailCount = 0;
-                    logger.Info("The job runner is active.\nPress Q+Enter to safely shut down or Ctl+C to exit immediately.");
+
+                    string info = String.Format(CultureInfo.InvariantCulture, "The job runner is active at '{0}'", bootstaps.BasePath);
+
+                    if (!String.IsNullOrEmpty(bootstaps.ConfigurationFilePath))
+                    {
+                        info += String.Format(CultureInfo.InvariantCulture, ", using the configuration file at '{0}'.", bootstaps.ConfigurationFilePath);
+                    }
+
+                    logger.Info(info);
+                    logger.Info("Press Q+Enter to safely shut down or Ctl+C to exit immediately.");
                 }
                 catch (Exception ex)
                 {
                     pullUpFailCount++;
-                    TimeoutAndRetryPullUp(ex.Message + "\n" + ex.StackTrace);
+                    logger.Error("Failed to bootstrap a job runner at the destination with the message: {0}", ex.Message);
+                    logger.Error(ex.StackTrace);
+                    TimeoutAndRetryPullUp();
                 }
             }
         }
@@ -300,7 +313,7 @@ namespace BlueCollar.Console
         /// <returns>The created logging configuration.</returns>
         private static LoggingConfiguration CreateLoggingConfiguration(bool console, bool file, string filePath)
         {
-            const string Layout = "${date:format=yyyy-MM-dd h\\:mm\\:ss tt} (${level}) - ${message} ${exception}";
+            const string Layout = "${date:format=yyyy-MM-dd h\\:mm\\:ss tt} - ${level:uppercase=true} - ${message} ${exception}";
 
             LoggingConfiguration config = new LoggingConfiguration();
 
@@ -359,23 +372,20 @@ namespace BlueCollar.Console
         }
 
         /// <summary>
-        /// Times out the current thread because of the given error message and retries
-        /// <see cref="CreateAndPullUpBootstraps()"/> after the timeout is complete.
+        /// Times out the current thread and retries <see cref="CreateAndPullUpBootstraps()"/> after the timeout is complete.
         /// </summary>
         /// <param name="message">The error message to log.</param>
-        private static void TimeoutAndRetryPullUp(string message)
+        private static void TimeoutAndRetryPullUp()
         {
             if (pullUpFailCount < 10)
             {
-                logger.Error("Failed to bootstrap a job runner at the destination with the message: {0}\nTrying again in 10 seconds.", message);
-
+                logger.Info("Trying again in 10 seconds.");
                 Thread.Sleep(10000);
                 CreateAndPullUpBootstraps();
             }
             else
             {
-                logger.Fatal("Failed to bootstrap a job runner at the destination application 10 times. I'm giving up.");
-
+                logger.Fatal("I'm giving up.");
                 inputThread.Abort();
                 exitHandle.Set();
             }

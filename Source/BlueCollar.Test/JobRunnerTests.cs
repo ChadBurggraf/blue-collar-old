@@ -96,21 +96,21 @@ namespace BlueCollar.Test
             {
                 Name = "___TEST_SCHED_1___" + Guid.NewGuid().ToString(),
                 RepeatHours = 24,
-                StartOn = DateTime.UtcNow.AddYears(-1)
+                StartOn = DateTime.UtcNow.AddYears(-1).AddMilliseconds(heartbeat)
             };
 
             JobScheduleElement sched2 = new JobScheduleElement()
             {
                 Name = "___TEST_SCHED_2___" + Guid.NewGuid().ToString(),
                 RepeatHours = .5,
-                StartOn = DateTime.UtcNow.AddDays(-1)
+                StartOn = DateTime.UtcNow.AddDays(-1).AddMilliseconds(heartbeat)
             };
 
             JobScheduleElement sched3 = new JobScheduleElement()
             {
                 Name = "___TEST_SCHED_3___" + Guid.NewGuid().ToString(),
                 RepeatHours = .5,
-                StartOn = DateTime.UtcNow.AddDays(1)
+                StartOn = DateTime.UtcNow.AddDays(1).AddMilliseconds(heartbeat)
             };
 
             JobScheduledJobElement job1 = new JobScheduledJobElement()
