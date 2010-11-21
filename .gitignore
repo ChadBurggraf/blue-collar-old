@@ -8,6 +8,7 @@ testimpactdata.sdf
 bin/
 obj/
 Build/
+!Source/BlueCollar.Console/App.config
 TestApps/Web35/App_Data/BlueCollar.s3db
 TestApps/Web40/App_Data/BlueCollar.s3db
 !TestApps/Web35/Web.config
