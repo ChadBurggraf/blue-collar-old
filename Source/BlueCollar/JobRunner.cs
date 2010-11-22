@@ -33,6 +33,7 @@ namespace BlueCollar
         private RunningJobs runs;
         private IJobStore store;
         private Thread god;
+        private bool deleteRecordsOnSuccess;
         private int heartbeat, maximumConcurrency, retryTimeout;
         private DateTime? lastScheduleCheck;
 
@@ -132,6 +133,7 @@ namespace BlueCollar
                     if (defaultRunner == null)
                     {
                         defaultRunner = new JobRunner(JobStore.Current);
+                        defaultRunner.DeleteRecordsOnSuccess = BlueCollarSection.Current.Store.DeleteRecordsOnSuccess;
                         defaultRunner.Heartbeat = BlueCollarSection.Current.Heartbeat;
                         defaultRunner.MaximumConcurrency = BlueCollarSection.Current.MaximumConcurrency;
                         defaultRunner.RetryTimeout = BlueCollarSection.Current.RetryTimeout;
@@ -146,6 +148,28 @@ namespace BlueCollar
         #endregion
 
         #region Public Instance Properties
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to delete records after successful job runs.
+        /// </summary>
+        public bool DeleteRecordsOnSuccess
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    return this.deleteRecordsOnSuccess;
+                }
+            }
+
+            set
+            {
+                lock (this.stateLocker)
+                {
+                    this.deleteRecordsOnSuccess = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the number of jobs currently being executed by the runner.
@@ -658,9 +682,16 @@ namespace BlueCollar
                 record.Status = JobStatus.Succeeded;
             }
 
-            this.store.SaveJob(record, trans);
-            this.runs.Remove(record.Id.Value);
+            if (this.DeleteRecordsOnSuccess)
+            {
+                this.store.DeleteJob(record.Id.Value);
+            }
+            else
+            {
+                this.store.SaveJob(record, trans);
+            }
 
+            this.runs.Remove(record.Id.Value);
             this.RaiseEvent(this.FinishJob, new JobRecordEventArgs(record));
         }
 

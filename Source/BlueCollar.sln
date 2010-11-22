@@ -4,6 +4,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5DCFE55D-D443-4A52-A594-50972070A95C}"
 	ProjectSection(SolutionItems) = preProject
 		BlueCollar.vsmdi = BlueCollar.vsmdi
+		..\BlueCollar.wxs = ..\BlueCollar.wxs
 		..\build.proj = ..\build.proj
 		Local.testsettings = Local.testsettings
 		SolutionInfo.cs = SolutionInfo.cs

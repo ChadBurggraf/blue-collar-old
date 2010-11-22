@@ -53,6 +53,7 @@ namespace BlueCollar.Test
             jobStore.DeleteAllJobs();
 
             jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".xml");
+            jobRunner.DeleteRecordsOnSuccess = false;
             jobRunner.Heartbeat = Heartbeat;
             jobRunner.MaximumConcurrency = 25;
             jobRunner.RetryTimeout = RetryTimeout;

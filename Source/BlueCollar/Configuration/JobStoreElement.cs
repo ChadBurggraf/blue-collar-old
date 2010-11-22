@@ -15,6 +15,16 @@ namespace BlueCollar.Configuration
     public class JobStoreElement : ConfigurationElement
     {
         /// <summary>
+        /// Gets or sets a value indicating whether to delete job records after successful job runs.
+        /// </summary>
+        [ConfigurationProperty("deleteRecordsOnSuccess", IsRequired = false, DefaultValue = true)]
+        public bool DeleteRecordsOnSuccess
+        {
+            get { return (bool)this["deleteRecordsOnSuccess"]; }
+            set { this["deleteRecordsOnSuccess"] = value; }
+        }
+
+        /// <summary>
         /// Gets or sets the type of the <see cref="BlueCollar.IJobStore"/> implementation to use when persisting jobs.
         /// When not configured, defaults to "BlueCollar.MemoryJobStore, BlueCollar".
         /// </summary>
