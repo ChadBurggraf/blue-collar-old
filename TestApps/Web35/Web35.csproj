@@ -30,9 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BlueCollar, Version=0.5.0.0, Culture=neutral, PublicKeyToken=94a99959b048ca35, processorArchitecture=MSIL">
+    <Reference Include="BlueCollar, Version=0.6.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Build\3.5\BlueCollar.dll</HintPath>
+      <HintPath>..\..\Build\Framework 3.5\BlueCollar.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -44,7 +44,7 @@
     </Reference>
     <Reference Include="System.Data.SQLite, Version=1.0.66.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Build\3.5\System.Data.SQLite.dll</HintPath>
+      <HintPath>..\..\Build\Framework 3.5\System.Data.SQLite.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization">

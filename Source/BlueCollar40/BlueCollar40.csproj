@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{E2ABB943-9EF8-4AEB-8F72-9FDAA405CB5B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BlueCollar</RootNamespace>
+    <AssemblyName>BlueCollar</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET40;CODE_ANALYSIS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\BlueCollar.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Build\Framework 4.0\</OutputPath>
+    <DefineConstants>TRACE;NET40</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\Build\Framework 4.0\BlueCollar.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Security">
+      <HintPath>..\..\Lib\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Npgsql">
+      <HintPath>..\..\Lib\Npgsql.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite, Version=1.0.66.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\System.Data.SQLite.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\BlueCollar\Configuration\BlueCollarSection.cs">
+      <Link>Configuration\BlueCollarSection.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Configuration\JobScheduledJobElement.cs">
+      <Link>Configuration\JobScheduledJobElement.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Configuration\JobScheduledJobElementCollection.cs">
+      <Link>Configuration\JobScheduledJobElementCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Configuration\JobScheduleElement.cs">
+      <Link>Configuration\JobScheduleElement.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Configuration\JobScheduleElementCollection.cs">
+      <Link>Configuration\JobScheduleElementCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Configuration\JobStoreElement.cs">
+      <Link>Configuration\JobStoreElement.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\ExceptionXElement.cs">
+      <Link>ExceptionXElement.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\IJob.cs">
+      <Link>IJob.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\IJobStore.cs">
+      <Link>IJobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\IJobStoreTransaction.cs">
+      <Link>IJobStoreTransaction.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Job.cs">
+      <Link>Job.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobErrorEventArgs.cs">
+      <Link>JobErrorEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRecord.cs">
+      <Link>JobRecord.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRecordEventArgs.cs">
+      <Link>JobRecordEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRecordResultsOrderBy.cs">
+      <Link>JobRecordResultsOrderBy.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRun.cs">
+      <Link>JobRun.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRunEventArgs.cs">
+      <Link>JobRunEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRunner.cs">
+      <Link>JobRunner.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRunnerEventSink.cs">
+      <Link>JobRunnerEventSink.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobRunnerProxy.cs">
+      <Link>JobRunnerProxy.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobStatus.cs">
+      <Link>JobStatus.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\JobStore.cs">
+      <Link>JobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\MemoryJobStore.cs">
+      <Link>MemoryJobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\NameValueCollections.cs">
+      <Link>NameValueCollections.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Objects.cs">
+      <Link>Objects.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\PostgresJobStore.cs">
+      <Link>PostgresJobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\RunningJobs.cs">
+      <Link>RunningJobs.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\ScheduledJob.cs">
+      <Link>ScheduledJob.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\ScheduledJobTuple.cs">
+      <Link>ScheduledJobTuple.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\SQLiteJobStore.cs">
+      <Link>SQLiteJobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\SqlJobStore.cs">
+      <Link>SqlJobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\SqlJobStoreTransaction.cs">
+      <Link>SqlJobStoreTransaction.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\SqlServerJobStore.cs">
+      <Link>SqlServerJobStore.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar\Strings.cs">
+      <Link>Strings.cs</Link>
+    </Compile>
+    <Compile Include="..\Common\ConfigurationElementCollection.cs">
+      <Link>Configuration\ConfigurationElementCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\Common\SolutionInfo.cs">
+      <Link>Properties\SolutionInfo.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\BlueCollar\BlueCollar.s3db">
+      <Link>BlueCollar.s3db</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\BlueCollar\Sql\BlueCollar-Postgres.sql">
+      <Link>Sql\BlueCollar-Postgres.sql</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\BlueCollar\Sql\BlueCollar-SQLite.sql">
+      <Link>Sql\BlueCollar-SQLite.sql</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\BlueCollar\Sql\BlueCollar-SqlServer.sql">
+      <Link>Sql\BlueCollar-SqlServer.sql</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

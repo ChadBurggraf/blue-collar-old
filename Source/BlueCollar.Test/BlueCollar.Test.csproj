@@ -49,7 +49,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SolutionInfo.cs">
+    <Compile Include="..\Common\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
     <Compile Include="JobRunnerTests.cs" />
@@ -69,14 +69,14 @@
     <Compile Include="TestJobs\TestTimeoutJob.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
-      <Project>{C648543C-C912-4F37-8CA5-F1D5E095B51F}</Project>
-      <Name>BlueCollar</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="App.config" />
     <None Include="App.config.template" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BlueCollar40\BlueCollar40.csproj">
+      <Project>{E2ABB943-9EF8-4AEB-8F72-9FDAA405CB5B}</Project>
+      <Name>BlueCollar40</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

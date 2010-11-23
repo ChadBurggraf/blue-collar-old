@@ -351,8 +351,8 @@ namespace BlueCollar.Console
                 FileTarget target = new FileTarget();
                 target.Layout = Layout;
                 target.FileName = filePath;
-                target.ArchiveFileName = Path.Combine(Path.GetDirectoryName(filePath), String.Concat(Path.GetFileNameWithoutExtension(filePath), ".{#####}.", Path.GetExtension(filePath)));
-                target.ArchiveAboveSize = 1024;
+                target.ArchiveFileName = Path.Combine(Path.GetDirectoryName(filePath), String.Concat(Path.GetFileNameWithoutExtension(filePath), ".{#####}", Path.GetExtension(filePath)));
+                target.ArchiveAboveSize = 10485760;
                 target.ArchiveNumbering = ArchiveNumberingMode.Sequence;
                 target.KeepFileOpen = false;
                 config.AddTarget("File", target);

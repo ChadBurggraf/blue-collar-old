@@ -14,7 +14,6 @@ namespace BlueCollar.Console
     using System.Reflection;
     using System.Security.Permissions;
     using System.Security.Policy;
-    using BlueCollar;
 
     /// <summary>
     /// Provides bootup and teardown services for a <see cref="JobRunner"/>.
@@ -32,7 +31,7 @@ namespace BlueCollar.Console
         private AppDomain domain;
         private JobRunnerProxy proxy;
         private JobRunnerEventSink eventSink;
-        private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
+        private List<BlueCollar.FileSystemWatcher> watchers = new List<BlueCollar.FileSystemWatcher>();
         
         #endregion
 
@@ -188,7 +187,7 @@ namespace BlueCollar.Console
             {
                 if (this.IsLoaded)
                 {
-                    foreach (FileSystemWatcher watcher in this.watchers)
+                    foreach (BlueCollar.FileSystemWatcher watcher in this.watchers)
                     {
                         watcher.Dispose();
                     }
@@ -213,15 +212,15 @@ namespace BlueCollar.Console
         #region Private Instance Methods
 
         /// <summary>
-        /// Creates a <see cref="FileSystemWatcher"/>.
+        /// Creates a <see cref="BlueCollar.FileSystemWatcher"/>.
         /// </summary>
         /// <param name="path">The path to watch.</param>
         /// <param name="mode">The watch mode.</param>
         /// <param name="filter">The file search filter to use.</param>
         /// <returns>The created <see cref="FileSystemWatcher"/>.</returns>
-        private FileSystemWatcher CreateWatcher(string path, FileSystemWatcherMode mode, string filter)
+        private BlueCollar.FileSystemWatcher CreateWatcher(string path, FileSystemWatcherMode mode, string filter)
         {
-            FileSystemWatcher watcher = new FileSystemWatcher(path);
+            BlueCollar.FileSystemWatcher watcher = new BlueCollar.FileSystemWatcher(path);
             watcher.Operation += new FileSystemEventHandler(this.WatcherOperation);
             watcher.Mode = mode;
             watcher.Filter = filter;
@@ -239,7 +238,7 @@ namespace BlueCollar.Console
             {
                 if (disposing)
                 {
-                    foreach (FileSystemWatcher watcher in this.watchers)
+                    foreach (BlueCollar.FileSystemWatcher watcher in this.watchers)
                     {
                         watcher.Dispose();
                     }

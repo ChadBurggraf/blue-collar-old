@@ -9,4 +9,4 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("Blue Collar Service")]
 [assembly: AssemblyDescription("Blue Collar Service")]
-[assembly: Guid("838d4a3d-2689-4fcc-966c-c246c4d78fd4")]
+[assembly: Guid("29bcb1b5-2847-49d7-b7aa-0e12863ca8ca")]

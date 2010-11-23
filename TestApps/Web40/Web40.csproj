@@ -32,9 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BlueCollar, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="BlueCollar, Version=0.6.0.0, Culture=neutral, PublicKeyToken=94a99959b048ca35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Build\4.0\BlueCollar.dll</HintPath>
+      <HintPath>..\..\Build\Framework 4.0\BlueCollar.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />

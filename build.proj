@@ -1,93 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <BuildDir>$(MSBuildProjectDirectory)\Build\$(MSBuildToolsVersion)</BuildDir>
-    <CommonDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Common</CommonDir>
-    <Configuration Condition="'$(Configuration)' == '' ">Release</Configuration>
-    <ConsoleDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Console</ConsoleDir>
-    <EnableSigning Condition="'$(EnableSigning)' == ''">true</EnableSigning>
-    <ILMergePath>$(MSBuildProjectDirectory)\Tools\ILMerge\ILMerge.exe</ILMergePath>
-    <KeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</KeyFile>
-    <LibDir>$(MSBuildProjectDirectory)\Lib</LibDir>
-    <LibraryDir>$(MSBuildProjectDirectory)\Source\BlueCollar</LibraryDir>
-    <ServiceDir>$(MSBuildProjectDirectory)\Source\BlueCollar.Service</ServiceDir>
-    <TestAppsDir>$(MSBuildProjectDirectory)\TestApps</TestAppsDir>
-  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
   
-  <Choose>
-    <When Condition="Exists('$(KeyFile)') And '$(EnableSigning)' == 'true'">
-      <PropertyGroup>
-        <KeyFileArgs>/keyfile:"$(KeyFile)"</KeyFileArgs>
-        <SignAssembly>true</SignAssembly>
-      </PropertyGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <SignAssembly>false</SignAssembly>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
-
-  <Choose>
-    <When Condition="'$(MSBuildToolsVersion)' == '3.5'">
-      <PropertyGroup>
-        <DefineConstants>DEBUG;CODE_ANALYSIS;NET35</DefineConstants>
-        <TargetPlatformArgs></TargetPlatformArgs>
-        <TestWebAppPath>$(TestAppsDir)\Web35</TestWebAppPath>
-      </PropertyGroup>
-      <ItemGroup>
-        <TestAppProjects Include="$(TestAppsDir)\Web35\Web35.csproj"/>
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <DefineConstants>RELEASE;NET40</DefineConstants>
-        <TargetPlatformArgs>/targetplatform:v4,%windir%\Microsoft.NET\Framework\v4.0.30319</TargetPlatformArgs>
-        <TestWebAppPath>$(TestAppsDir)\Web35</TestWebAppPath>
-      </PropertyGroup>
-      <ItemGroup>
-        <TestAppProjects Include="$(TestAppsDir)\Web40\Web40.csproj"/>
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
+  <PropertyGroup>
+    <BuildDir>$(MSBuildProjectDirectory)\Build</BuildDir>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <EnableSigning Condition="'$(EnableSigning)' == ''">true</EnableSigning>
+    <KeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</KeyFile>
+    <SignAssembly>false</SignAssembly>
+    <TempDir>$(MSBuildProjectDirectory)\PackageTemp</TempDir>
+    <TestAppsDir>$(MSBuildProjectDirectory)\TestApps</TestAppsDir>
+    <WixDir>$(MSBuildExtensionsPath32)\..\Windows Installer XML v3.5\bin</WixDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="Exists('$(KeyFile)') And '$(EnableSigning)' == 'true'">
+    <KeyFileArgs>/keyfile:"$(KeyFile)"</KeyFileArgs>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
 
   <ItemGroup>
-    <ProjectsToBuild Include="$(LibraryDir)\BlueCollar.csproj"/>
-    <ProjectsToBuild Include="$(ConsoleDir)\BlueCollar.Console.csproj"/>
-    <ProjectsToBuild Include="$(ServiceDir)\BlueCollar.Service.csproj"/>
+    <ProjectsToBuild Include="Source\BlueCollar35\BlueCollar35.csproj"/>
+    <ProjectsToBuild Include="Source\BlueCollar40\BlueCollar40.csproj"/>
+    <ProjectsToBuild Include="Source\BlueCollar.Console35\BlueCollar.Console35.csproj"/>
+    <ProjectsToBuild Include="Source\BlueCollar.Console40\BlueCollar.Console40.csproj"/>
+    <ProjectsToBuild Include="Source\BlueCollar.Service\BlueCollar.Service.csproj"/>
   </ItemGroup>
 
-  <Target Name="Build" DependsOnTargets="Clean">
-    <MakeDir Directories="$(BuildDir)"/>
-    <MSBuild  Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile);DefineConstants=$(DefineConstants)"  ToolsVersion="$(MSBuildToolsVersion)"/>
+  <ItemGroup>
+    <TestAppProjects Include="$(TestAppsDir)\Web35\Web35.csproj"/>
+    <TestAppProjects Include="$(TestAppsDir)\Web40\Web40.csproj"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <BuildOutputs Include="$(LibDir)\Mono.Security.dll"/>
-      <BuildOutputs Include="$(LibDir)\NDesk.Options.dll"/>
-      <BuildOutputs Include="$(LibDir)\NLog.dll"/>
-      <BuildOutputs Include="$(LibDir)\Npgsql.dll"/>
-      <BuildOutputs Include="$(LibDir)\System.Data.SQLite.dll"/>
-      <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.dll"/>
-      <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.pdb"/>
-      <BuildOutputs Include="$(LibraryDir)\bin\$(Configuration)\BlueCollar.xml"/>
-      <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe"/>
-      <BuildOutputs Include="$(ConsoleDir)\bin\$(Configuration)\collar.exe.config" Condition="'$(MSBuildToolsVersion)' != '3.5'"/>
-      <BuildOutputs Include="$(ServiceDir)\bin\$(Configuration)\collar_service.exe"/>
-    </ItemGroup>
-    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(BuildDir)"/>
-
+  <Target Name="Build">
+    <MSBuild  Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile)"/>
     <CallTarget Targets="BuildTestApps"/>
   </Target>
 
   <Target Name="BuildTestApps">
-    <Delete Files="$(TestWebAppPath)\App_Data\BlueCollar.s3db"/>
-    <MakeDir Directories="$(TestWebAppPath)\App_Data"/>
-    <Copy SourceFiles="$(LibraryDir)\BlueCollar.s3db" DestinationFolder="$(TestWebAppPath)\App_Data"/>
-    <MSBuild Projects="@(TestAppProjects)" Targets="Clean;Build"/>
+    <Delete Files="$(TestAppsDir)\Web35\App_Data\BlueCollar.s3db;$(TestAppsDir)\Web40\App_Data\BlueCollar.s3db"/>
+    <MakeDir Directories="$(TestAppsDir)\Web35\App_Data;$(TestAppsDir)\Web40\App_Data"/>
+    <Copy SourceFiles="Source\BlueCollar\BlueCollar.s3db" DestinationFolder="$(TestAppsDir)\Web35\App_Data"/>
+    <Copy SourceFiles="Source\BlueCollar\BlueCollar.s3db" DestinationFolder="$(TestAppsDir)\Web40\App_Data"/>
+    <MSBuild Projects="@(TestAppProjects)"/>
   </Target>
 
   <Target Name="Clean">
-    <MSBuild Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=$(Configuration);DefineConstants=$(DefineConstants)" ToolsVersion="$(MSBuildToolsVersion)"/>
-    <RemoveDir Directories="$(BuildDir)"/>
+    <MSBuild Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=$(Configuration)"/>
+    <MSBuild Projects="@(TestAppProjects)" Targets="Clean"/>
+  </Target>
+
+  <Target Name="Package" DependsOnTargets="Build">
+    <RemoveDir Directories="$(TempDir)"/>
+    <Delete Files="$(BuildDir)\BlueCollar.msi"/>
+    
+    <ItemGroup>
+      <BuildFiles Include="$(BuildDir)\**\*"/>
+      <SourceFiles Include="build-and-package.bat;build.proj;installer.wxs"/>
+      <SourceFiles Include="**\Lib\*"/>
+      <SourceFiles Include="**\Source\**\*"/>
+      <SourceFiles Include="**\TestApps\**\*"/>
+      <SourceFiles Include="**\Tools\**\*"/>
+      <SourceFiles Remove="**\*.csproj.user;**\*.snk;**\*.suo;**\*.vsmdi;**\StyleCop.Cache;**\testimpactdata.sdf"/>
+      <SourceFiles Remove="**\Source\TestResults\**\*;**\Source\**\bin\**\*;**\Source\**\obj\**\*"/>
+      <SourceFiles Remove="**\Source\BlueCollar.Test\App.config"/>
+      <SourceFiles Remove="**\TestApps\**\bin\**\*;**\TestApps\**\obj\**\*"/>
+      <SourceFiles Remove="**\TestApps\**\App_Data\*.s3db"/>
+    </ItemGroup>
+
+    <MakeDir Directories="$(TempDir)"/>
+    <Zip Files="@(SourceFiles)" ZipFileName="$(TempDir)\BlueCollar-Src.zip"/>
+    <Copy SourceFiles="@(BuildFiles)" DestinationFiles="@(BuildFiles->'$(TempDir)\%(RecursiveDir)%(Filename)%(Extension)')"/>
+    <Copy SourceFiles="installer.wxs" DestinationFolder="$(TempDir)"/>
+
+    <Exec Command='"$(WixDir)\candle.exe" "$(TempDir)\installer.wxs"' WorkingDirectory="$(TempDir)"/>
+    <Exec Command='"$(WixDir)\light.exe" -ext WixUIExtension -out BlueCollar.msi "$(TempDir)\installer.wixobj"' WorkingDirectory="$(TempDir)"/>
+    <Copy SourceFiles="$(TempDir)\BlueCollar.msi" DestinationFolder="$(BuildDir)"/>
+    <RemoveDir Directories="$(TempDir)"/>
   </Target>
 </Project>
