@@ -51,15 +51,6 @@
     <Compile Include="..\Common\ConfigurationElementCollection.cs">
       <Link>ConfigurationElementCollection.cs</Link>
     </Compile>
-    <Compile Include="..\Common\FileSystemEventType.cs">
-      <Link>FileSystemEventType.cs</Link>
-    </Compile>
-    <Compile Include="..\Common\FileSystemWatcher.cs">
-      <Link>FileSystemWatcher.cs</Link>
-    </Compile>
-    <Compile Include="..\Common\FileSystemWatcherMode.cs">
-      <Link>FileSystemWatcherMode.cs</Link>
-    </Compile>
     <Compile Include="..\Common\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>

@@ -32,7 +32,7 @@ namespace BlueCollar.Console
         private static string config, directory;
         private static bool autoReload;
         private static int pullUpFailCount;
-        private static JobRunnerBootstraps bootstaps;
+        private static JobRunnerBootstraps bootstraps;
         private static ManualResetEvent exitHandle;
         private static Thread inputThread;
         private static Logger logger;
@@ -125,7 +125,7 @@ namespace BlueCollar.Console
             exitHandle = new ManualResetEvent(false);
             CreateAndPullUpBootstraps();
 
-            if (bootstaps != null && bootstaps.IsLoaded)
+            if (bootstraps != null && bootstraps.IsLoaded)
             {
                 inputThread = new Thread(new ParameterizedThreadStart(WaitForInput));
                 inputThread.Start();
@@ -277,32 +277,32 @@ namespace BlueCollar.Console
         {
             lock (bootstrapsLocker)
             {
-                if (bootstaps != null)
+                if (bootstraps != null)
                 {
-                    bootstaps.Dispose();
+                    bootstraps.Dispose();
                 }
 
                 try
                 {
-                    bootstaps = new JobRunnerBootstraps(directory, config);
-                    bootstaps.AllFinished += new EventHandler(BootstrapsAllFinished);
-                    bootstaps.CancelJob += new EventHandler<JobRecordEventArgs>(BootstrapsCancelJob);
-                    bootstaps.ChangeDetected += new EventHandler<FileSystemEventArgs>(BootstrapsChangeDetected);
-                    bootstaps.DequeueJob += new EventHandler<JobRecordEventArgs>(BootstrapsDequeueJob);
-                    bootstaps.Error += new EventHandler<JobErrorEventArgs>(BootstrapsError);
-                    bootstaps.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(BootstrapsExecuteScheduledJob);
-                    bootstaps.FinishJob += new EventHandler<JobRecordEventArgs>(BootstrapsFinishJob);
-                    bootstaps.RetryEnqueued += new EventHandler<JobRecordEventArgs>(BootstrapsRetryEnqueued);
-                    bootstaps.TimeoutJob += new EventHandler<JobRecordEventArgs>(BootstrapsTimeoutJob);
-                    bootstaps.PullUp();
+                    bootstraps = new JobRunnerBootstraps(directory, config);
+                    bootstraps.AllFinished += new EventHandler(BootstrapsAllFinished);
+                    bootstraps.CancelJob += new EventHandler<JobRecordEventArgs>(BootstrapsCancelJob);
+                    bootstraps.ChangeDetected += new EventHandler<FileSystemEventArgs>(BootstrapsChangeDetected);
+                    bootstraps.DequeueJob += new EventHandler<JobRecordEventArgs>(BootstrapsDequeueJob);
+                    bootstraps.Error += new EventHandler<JobErrorEventArgs>(BootstrapsError);
+                    bootstraps.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(BootstrapsExecuteScheduledJob);
+                    bootstraps.FinishJob += new EventHandler<JobRecordEventArgs>(BootstrapsFinishJob);
+                    bootstraps.RetryEnqueued += new EventHandler<JobRecordEventArgs>(BootstrapsRetryEnqueued);
+                    bootstraps.TimeoutJob += new EventHandler<JobRecordEventArgs>(BootstrapsTimeoutJob);
+                    bootstraps.PullUp();
 
                     pullUpFailCount = 0;
 
-                    string info = String.Format(CultureInfo.InvariantCulture, "The job runner is active at '{0}'", bootstaps.BasePath);
+                    string info = String.Format(CultureInfo.InvariantCulture, "The job runner is active at '{0}'", bootstraps.BasePath);
 
-                    if (!String.IsNullOrEmpty(bootstaps.ConfigurationFilePath))
+                    if (!String.IsNullOrEmpty(bootstraps.ConfigurationFilePath))
                     {
-                        info += String.Format(CultureInfo.InvariantCulture, ", using the configuration file at '{0}'.", bootstaps.ConfigurationFilePath);
+                        info += String.Format(CultureInfo.InvariantCulture, ", using the configuration file at '{0}'.", bootstraps.ConfigurationFilePath);
                     }
 
                     logger.Info(info);
@@ -412,36 +412,18 @@ namespace BlueCollar.Console
         {
             while (true)
             {
-                bool isLoaded = false;
+                string input = (Console.ReadLine() ?? String.Empty).Trim();
 
                 lock (bootstrapsLocker)
                 {
-                    isLoaded = bootstaps != null && bootstaps.IsLoaded;
+                    if (bootstraps != null && bootstraps.IsLoaded && "q".Equals(input, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.Info("The job runner is shutting down.");
+                        autoReload = false;
+                        bootstraps.PushDown(true);
+                        break;
+                    }
                 }
-
-                if (isLoaded)
-                {
-                    byte[] buffer = new byte[1];
-
-                    System.Console.OpenStandardInput().BeginRead(
-                        buffer,
-                        0,
-                        buffer.Length,
-                        (IAsyncResult result) =>
-                        {
-                            string input = Encoding.ASCII.GetString(buffer).Trim();
-
-                            if ("q".Equals(input, StringComparison.OrdinalIgnoreCase))
-                            {
-                                logger.Info("The job runner is shutting down.");
-                                autoReload = false;
-                                bootstaps.PushDown(true);
-                            }
-                        },
-                        null);
-                }
-
-                Thread.Sleep(250);
             }
         }
     }

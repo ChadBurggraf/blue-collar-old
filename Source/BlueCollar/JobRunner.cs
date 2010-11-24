@@ -684,7 +684,7 @@ namespace BlueCollar
 
             if (this.DeleteRecordsOnSuccess)
             {
-                this.store.DeleteJob(record.Id.Value);
+                this.store.DeleteJob(record.Id.Value, trans);
             }
             else
             {

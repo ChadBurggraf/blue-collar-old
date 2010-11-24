@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace BlueCollar
+namespace BlueCollar.Console
 {
     using System;
     using System.Collections.Generic;

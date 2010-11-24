@@ -9,7 +9,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BlueCollar.Console</RootNamespace>
-    <AssemblyName>collar</AssemblyName>
+    <AssemblyName>collar_40</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Build\Framework 4.0\</OutputPath>
+    <OutputPath>..\..\Build\</OutputPath>
     <DefineConstants>TRACE;NET40</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -34,6 +34,10 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mono.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\Mono.Security.dll</HintPath>
+    </Reference>
     <Reference Include="NDesk.Options">
       <HintPath>..\..\Lib\NDesk.Options.dll</HintPath>
     </Reference>
@@ -41,9 +45,18 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lib\NLog.dll</HintPath>
     </Reference>
+    <Reference Include="Npgsql, Version=2.0.9.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\Npgsql.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite, Version=1.0.66.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\System.Data.SQLite.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -52,17 +65,17 @@
     <Compile Include="..\BlueCollar.Console\BlueCollarConsole.cs">
       <Link>BlueCollarConsole.cs</Link>
     </Compile>
-    <Compile Include="..\BlueCollar.Console\JobRunnerBootstraps.cs">
-      <Link>JobRunnerBootstraps.cs</Link>
-    </Compile>
-    <Compile Include="..\Common\FileSystemEventType.cs">
+    <Compile Include="..\BlueCollar.Console\FileSystemEventType.cs">
       <Link>FileSystemEventType.cs</Link>
     </Compile>
-    <Compile Include="..\Common\FileSystemWatcher.cs">
+    <Compile Include="..\BlueCollar.Console\FileSystemWatcher.cs">
       <Link>FileSystemWatcher.cs</Link>
     </Compile>
-    <Compile Include="..\Common\FileSystemWatcherMode.cs">
+    <Compile Include="..\BlueCollar.Console\FileSystemWatcherMode.cs">
       <Link>FileSystemWatcherMode.cs</Link>
+    </Compile>
+    <Compile Include="..\BlueCollar.Console\JobRunnerBootstraps.cs">
+      <Link>JobRunnerBootstraps.cs</Link>
     </Compile>
     <Compile Include="..\Common\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
@@ -75,12 +88,13 @@
       <Name>BlueCollar40</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">
+    <Delete Files="$(OutputPath)BlueCollar.dll;$(OutputPath)BlueCollar.pdb;$(OutputPath)BlueCollar.xml" Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
   </Target>
-  -->
 </Project>

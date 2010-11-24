@@ -33,7 +33,6 @@ namespace BlueCollar.Service
         private static string currentDirectory, logsDirectory;
         private static Logger logger;
         private ProcessTuple[] processes = new ProcessTuple[0];
-        private BlueCollar.FileSystemWatcher watcher;
         private bool isRunning;
 
         #endregion
@@ -46,12 +45,6 @@ namespace BlueCollar.Service
         public Service()
         {
             this.InitializeComponent();
-
-            string configDirectory = Path.GetDirectoryName(BlueCollarServiceSection.Current.ElementInformation.Source);
-            string configFile = Path.GetFileName(BlueCollarServiceSection.Current.ElementInformation.Source);
-            this.watcher = new BlueCollar.FileSystemWatcher(configDirectory, configFile);
-            this.watcher.Operation += new FileSystemEventHandler(this.WatcherOperation);
-            this.watcher.EnableRaisingEvents = true;
         }
 
         #endregion
@@ -371,26 +364,6 @@ namespace BlueCollar.Service
                         Logger.Error(CultureInfo.InvariantCulture, "An error occurred stopping a Blue Collar jobs process ({0}): {1}", tuple.Application.Name, ex.Message);
                         Logger.Error(ex.StackTrace);
                     }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Raises this instance's <see cref="BlueCollar.FileSystemWatcher"/>'s Operation event.
-        /// </summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event arguments.</param>
-        private void WatcherOperation(object sender, FileSystemEventArgs e)
-        {
-            lock (this)
-            {
-                this.StopAllProcesses(true);
-                BlueCollarServiceSection.Refresh();
-
-                if (this.isRunning)
-                {
-                    this.InitializeProcessTuples();
-                    this.StartAllProcesses();
                 }
             }
         }

@@ -1,6 +1,5 @@
 *.suo
 *.csproj.user
-*.config
 *.vsmdi
 *.snk
 StyleCop.Cache
@@ -9,9 +8,7 @@ bin/
 obj/
 Build/
 PackageTemp/
-!Source/BlueCollar.Console/App.config
+Source/BlueCollar.Test/App.config
 TestApps/Web35/App_Data/BlueCollar.s3db
 TestApps/Web40/App_Data/BlueCollar.s3db
-!TestApps/Web35/Web.config
-!TestApps/Web40/Web.config
 TestResults/

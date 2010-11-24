@@ -31,7 +31,7 @@ namespace BlueCollar.Console
         private AppDomain domain;
         private JobRunnerProxy proxy;
         private JobRunnerEventSink eventSink;
-        private List<BlueCollar.FileSystemWatcher> watchers = new List<BlueCollar.FileSystemWatcher>();
+        private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         
         #endregion
 
@@ -187,7 +187,7 @@ namespace BlueCollar.Console
             {
                 if (this.IsLoaded)
                 {
-                    foreach (BlueCollar.FileSystemWatcher watcher in this.watchers)
+                    foreach (FileSystemWatcher watcher in this.watchers)
                     {
                         watcher.Dispose();
                     }
@@ -212,15 +212,15 @@ namespace BlueCollar.Console
         #region Private Instance Methods
 
         /// <summary>
-        /// Creates a <see cref="BlueCollar.FileSystemWatcher"/>.
+        /// Creates a <see cref="FileSystemWatcher"/>.
         /// </summary>
         /// <param name="path">The path to watch.</param>
         /// <param name="mode">The watch mode.</param>
         /// <param name="filter">The file search filter to use.</param>
         /// <returns>The created <see cref="FileSystemWatcher"/>.</returns>
-        private BlueCollar.FileSystemWatcher CreateWatcher(string path, FileSystemWatcherMode mode, string filter)
+        private FileSystemWatcher CreateWatcher(string path, FileSystemWatcherMode mode, string filter)
         {
-            BlueCollar.FileSystemWatcher watcher = new BlueCollar.FileSystemWatcher(path);
+            FileSystemWatcher watcher = new FileSystemWatcher(path);
             watcher.Operation += new FileSystemEventHandler(this.WatcherOperation);
             watcher.Mode = mode;
             watcher.Filter = filter;
@@ -238,7 +238,7 @@ namespace BlueCollar.Console
             {
                 if (disposing)
                 {
-                    foreach (BlueCollar.FileSystemWatcher watcher in this.watchers)
+                    foreach (FileSystemWatcher watcher in this.watchers)
                     {
                         watcher.Dispose();
                     }

@@ -8,44 +8,43 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="PFiles">
         <Directory Id="INSTALLDIR" Name="Blue Collar">
-          <Directory Id="Framework35" Name="Framework 3.5">
-            <Component Id="Framework35" Guid="ABC9EE0C-E97D-4962-97A9-A9E6D14D3223">
-              <File Id="BlueCollarDLL35" Name="BlueCollar.dll" DiskId="1" Source="Framework 3.5\BlueCollar.dll" KeyPath="yes"/>
-              <File Id="BlueCollarPDB35" Name="BlueCollar.pdb" DiskId="1" Source="Framework 3.5\BlueCollar.pdb"/>
-              <File Id="BlueCollarXML35" Name="BlueCollar.xml" DiskId="1" Source="Framework 3.5\BlueCollar.xml"/>
-              <File Id="CollarEXE35" Name="collar.exe" DiskId="1" Source="Framework 3.5\collar.exe"/>
-              <File Id="MonoSecurityDLL35" Name="Mono.Security.dll" DiskId="1" Source="Framework 3.5\Mono.Security.dll"/>
-              <File Id="NDeskOptionsDLL35" Name="NDesk.Options.dll" DiskId="1" Source="Framework 3.5\NDesk.Options.dll"/>
-              <File Id="NLogDLL35" Name="NLog.dll" DiskId="1" Source="Framework 3.5\NLog.dll"/>
-              <File Id="NLogXML35" Name="NLog.xml" DiskId="1" Source="Framework 3.5\NLog.xml"/>
-              <File Id="NpgsqlDLL35" Name="Npgsql.dll" DiskId="1" Source="Framework 3.5\Npgsql.dll"/>
-              <File Id="SystemDataSQLiteDLL35" Name="System.Data.SQLite.dll" DiskId="1" Source="Framework 3.5\System.Data.SQLite.dll"/>
-              <File Id="SystemDataSQLiteXML35" Name="System.Data.SQLite.XML" DiskId="1" Source="Framework 3.5\System.Data.SQLite.XML"/>
-            </Component>
-          </Directory>
-          <Directory Id="Framework40" Name="Framework 4.0">
-            <Component Id="Framework40" Guid="1285F835-D475-46B5-AC03-AFCC2B0CBE09">
-              <File Id="BlueCollarDLL40" Name="BlueCollar.dll" DiskId="1" Source="Framework 4.0\BlueCollar.dll" KeyPath="yes"/>
-              <File Id="BlueCollarPDB40" Name="BlueCollar.pdb" DiskId="1" Source="Framework 4.0\BlueCollar.pdb"/>
-              <File Id="BlueCollarXML40" Name="BlueCollar.xml" DiskId="1" Source="Framework 4.0\BlueCollar.xml"/>
-              <File Id="CollarEXE40" Name="collar.exe" DiskId="1" Source="Framework 4.0\collar.exe"/>
-              <File Id="MonoSecurityDLL40" Name="Mono.Security.dll" DiskId="1" Source="Framework 4.0\Mono.Security.dll"/>
-              <File Id="NDeskOptionsDLL40" Name="NDesk.Options.dll" DiskId="1" Source="Framework 4.0\NDesk.Options.dll"/>
-              <File Id="NLogDLL40" Name="NLog.dll" DiskId="1" Source="Framework 4.0\NLog.dll"/>
-              <File Id="NLogXML40" Name="NLog.xml" DiskId="1" Source="Framework 4.0\NLog.xml"/>
-              <File Id="NpgsqlDLL40" Name="Npgsql.dll" DiskId="1" Source="Framework 4.0\Npgsql.dll"/>
-              <File Id="SystemDataSQLiteDLL40" Name="System.Data.SQLite.dll" DiskId="1" Source="Framework 4.0\System.Data.SQLite.dll"/>
-              <File Id="SystemDataSQLiteXML40" Name="System.Data.SQLite.XML" DiskId="1" Source="Framework 4.0\System.Data.SQLite.XML"/>
-            </Component>
-          </Directory>
-          <Component Id="Service" Guid="1F48A107-26B0-489D-9DEC-8CAF2F26B3DC">
-            <File Id="CollarServiceEXE" Name="collar_service.exe" DiskId="1" Source="collar_service.exe" KeyPath="yes"/>
-            <File Id="CollarServiceExeCONFIG" Name="collar_service.exe.config" DiskId="1" Source="collar_service.exe.config"/>
-            <File Id="NLogDLLService" Name="NLog.dll" DiskId="1" Source="NLog.dll"/>
-            <File Id="NLogDXMLService" Name="NLog.xml" DiskId="1" Source="NLog.xml"/>
+          
+          <Component Id="Application" Guid="42CE5D7E-828E-42D8-BF6B-AE83DAF9BCF0">
+            <File Id="collar35EXE" Name="collar_35.exe" DiskId="1" Source="collar_35.exe"/>
+            <File Id="collar35exeCONFIG" Name="collar_35.exe.config" DiskId="1" Source="collar_35.exe.config"/>
+            <File Id="collar40EXE" Name="collar_40.exe" DiskId="1" Source="collar_40.exe"/>
+            <File Id="collar40exeCONFIG" Name="collar_40.exe.config" DiskId="1" Source="collar_40.exe.config"/>
+            <File Id="collarserviceEXE" Name="collar_service.exe" DiskId="1" Source="collar_service.exe" KeyPath="yes"/>
+            <File Id="collarserviceexeCONFIG" Name="collar_service.exe.config" DiskId="1" Source="collar_service.exe.config"/>
+            <File Id="MonoSecurityDLL" Name="Mono.Security.dll" DiskId="1" Source="Mono.Security.dll"/>
+            <File Id="NDeskOptionsDLL" Name="NDesk.Options.dll" DiskId="1" Source="NDesk.Options.dll"/>
+            <File Id="NLogDLL" Name="NLog.dll" DiskId="1" Source="NLog.dll"/>
+            <File Id="NLogXML" Name="NLog.xml" DiskId="1" Source="NLog.xml"/>
+            <File Id="NpgsqlDLL" Name="Npgsql.dll" DiskId="1" Source="Npgsql.dll"/>
+            <File Id="SystemDataSQLiteDLL" Name="System.Data.SQLite.dll" DiskId="1" Source="System.Data.SQLite.dll"/>
+            <File Id="SystemDataSQLiteXML" Name="System.Data.SQLite.xml" DiskId="1" Source="System.Data.SQLite.xml"/>
             <ServiceInstall Id="ServiceInstaller" Type="ownProcess" Vital="yes" Name="BlueCollarService" DisplayName="Blue Collar Service" Description="Executes Blue Collar job processes." Start="auto" Account="LocalSystem" ErrorControl="normal" Interactive="no"/>
             <ServiceControl Id="ServiceControl" Start="install" Stop="both" Remove="uninstall" Name="BlueCollarService" Wait="yes"/>
           </Component>
+
+          <Directory Id="ReferenceAssemblies" Name="Reference Assemblies">
+            <Directory Id="Framework35" Name="Framework 3.5">
+              <Component Id="Framework35" Guid="5EE363F7-FDAE-4E32-A1A9-4F84FF84F0C9">
+                <File Id="BlueCollarDLL35" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.dll" KeyPath="yes"/>
+                <File Id="BlueCollarPDB35" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.pdb"/>
+                <File Id="BlueCollarXML35" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.xml"/>
+              </Component>
+            </Directory>
+            
+            <Directory Id="Framework40" Name="Framework 4.0">
+              <Component Id="Framework40" Guid="C72CE44D-A0B9-4A8B-A821-102587B94CA3">
+                <File Id="BlueCollarDLL40" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" KeyPath="yes"/>
+                <File Id="BlueCollarPDB40" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.pdb"/>
+                <File Id="BlueCollarXML40" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.xml"/>
+              </Component>
+            </Directory>
+          </Directory>
+          
           <Component Id="Source" Guid="6880F6B9-FA8C-4C0E-B8E0-F5D386815BE4">
             <File Id="BlueCollarSrcZIP" Name="BlueCollar-Src.zip" DiskId="1" Source="BlueCollar-Src.zip" KeyPath="yes"/>
           </Component>
@@ -54,9 +53,9 @@
     </Directory>
 
     <Feature Id="Complete" Title="Blue Collar" Level="1" Description="Blue Collar runtime assemblies and source code." Display="expand" ConfigurableDirectory="INSTALLDIR">
+      <ComponentRef Id="Application"/>
       <ComponentRef Id="Framework35"/>
       <ComponentRef Id="Framework40"/>
-      <ComponentRef Id="Service"/>
       <ComponentRef Id="Source"/>
     </Feature>
 

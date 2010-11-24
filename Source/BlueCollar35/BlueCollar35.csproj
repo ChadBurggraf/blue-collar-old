@@ -26,11 +26,12 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Build\Framework 3.5\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE;NET35</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\..\Build\Framework 3.5\BlueCollar.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\BlueCollar.xml</DocumentationFile>
+    <ReferenceAssembliesOutputPath>..\..\Build\Reference Assemblies\Framework 3.5\</ReferenceAssembliesOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Security">
@@ -181,11 +182,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
   <Target Name="AfterBuild">
+      <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll;$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(ReferenceAssembliesOutputPath)" Condition="'$(ReferenceAssembliesOutputPath)' != ''"/>
+    <!-- Hey, you're a real asshole, Visual Studio. 
+         http://social.msdn.microsoft.com/Forums/en-US/msbuild/thread/8a2f4af8-7a57-454f-aa7d-684f3f89acf3 -->
+    <Exec Command='copy "$(OutputPath)*.tmp" "$(ReferenceAssembliesOutputPath)$(AssemblyName).xml"' Condition="'$(ReferenceAssembliesOutputPath)' != '' And !Exists('$(TargetDir)$(AssemblyName).xml')"/>
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).xml" DestinationFolder="$(ReferenceAssembliesOutputPath)" Condition="'$(ReferenceAssembliesOutputPath)' != '' And Exists('$(TargetDir)$(AssemblyName).xml')" />
   </Target>
-  -->
 </Project>
