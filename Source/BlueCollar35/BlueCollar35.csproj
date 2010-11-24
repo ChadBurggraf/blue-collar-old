@@ -164,7 +164,6 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <EmbeddedResource Include="..\BlueCollar\Sql\BlueCollar-Postgres.sql">
       <Link>Sql\BlueCollar-Postgres.sql</Link>
@@ -182,11 +181,4 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="AfterBuild">
-      <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll;$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(ReferenceAssembliesOutputPath)" Condition="'$(ReferenceAssembliesOutputPath)' != ''"/>
-    <!-- Hey, you're a real asshole, Visual Studio. 
-         http://social.msdn.microsoft.com/Forums/en-US/msbuild/thread/8a2f4af8-7a57-454f-aa7d-684f3f89acf3 -->
-    <Exec Command='copy "$(OutputPath)*.tmp" "$(ReferenceAssembliesOutputPath)$(AssemblyName).xml"' Condition="'$(ReferenceAssembliesOutputPath)' != '' And !Exists('$(TargetDir)$(AssemblyName).xml')"/>
-    <Copy SourceFiles="$(OutputPath)$(AssemblyName).xml" DestinationFolder="$(ReferenceAssembliesOutputPath)" Condition="'$(ReferenceAssembliesOutputPath)' != '' And Exists('$(TargetDir)$(AssemblyName).xml')" />
-  </Target>
 </Project>

@@ -3,17 +3,16 @@
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
   
   <PropertyGroup>
+    <AssemblyOriginatorKeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</AssemblyOriginatorKeyFile>
     <BuildDir>$(MSBuildProjectDirectory)\Build</BuildDir>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <EnableSigning Condition="'$(EnableSigning)' == ''">true</EnableSigning>
-    <KeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</KeyFile>
     <SignAssembly>false</SignAssembly>
     <TempDir>$(MSBuildProjectDirectory)\PackageTemp</TempDir>
     <TestAppsDir>$(MSBuildProjectDirectory)\TestApps</TestAppsDir>
     <WixDir>$(MSBuildExtensionsPath32)\..\Windows Installer XML v3.5\bin</WixDir>
   </PropertyGroup>
-  <PropertyGroup Condition="Exists('$(KeyFile)') And '$(EnableSigning)' == 'true'">
-    <KeyFileArgs>/keyfile:"$(KeyFile)"</KeyFileArgs>
+  <PropertyGroup Condition="Exists('$(AssemblyOriginatorKeyFile)') And '$(EnableSigning)' == 'true'">
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
 
@@ -30,8 +29,33 @@
     <TestAppProjects Include="$(TestAppsDir)\Web40\Web40.csproj"/>
   </ItemGroup>
 
-  <Target Name="Build">
-    <MSBuild  Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(KeyFile)"/>
+  <Target Name="Build" DependsOnTargets="Clean">
+    <MSBuild  Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(AssemblyOriginatorKeyFile)"/>
+    <ItemGroup>
+      <BuildOutputs Include="Source\BlueCollar.Console35\bin\$(Configuration)\collar_35.exe"/>
+      <BuildOutputs Include="Source\BlueCollar.Console35\bin\$(Configuration)\collar_35.exe.config"/>
+      <BuildOutputs Include="Source\BlueCollar.Console40\bin\$(Configuration)\collar_40.exe"/>
+      <BuildOutputs Include="Source\BlueCollar.Console40\bin\$(Configuration)\collar_40.exe.config"/>
+      <BuildOutputs Include="Source\BlueCollar.Service\bin\$(Configuration)\collar_service.exe"/>
+      <BuildOutputs Include="Source\BlueCollar.Service\bin\$(Configuration)\collar_service.exe.config"/>
+      <BuildOutputs Include="Lib\Mono.Security.dll"/>
+      <BuildOutputs Include="Lib\NDesk.Options.dll"/>
+      <BuildOutputs Include="Lib\NLog.dll"/>
+      <BuildOutputs Include="Lib\NLog.xml"/>
+      <BuildOutputs Include="Lib\Npgsql.dll"/>
+      <BuildOutputs Include="Lib\System.Data.SQLite.dll"/>
+      <BuildOutputs Include="Lib\System.Data.SQLite.xml"/>
+      <Reference35Outputs Include="Source\BlueCollar35\bin\$(Configuration)\BlueCollar.dll"/>
+      <Reference35Outputs Include="Source\BlueCollar35\bin\$(Configuration)\BlueCollar.pdb"/>
+      <Reference35Outputs Include="Source\BlueCollar35\bin\$(Configuration)\BlueCollar.xml"/>
+      <Reference40Outputs Include="Source\BlueCollar40\bin\$(Configuration)\BlueCollar.dll"/>
+      <Reference40Outputs Include="Source\BlueCollar40\bin\$(Configuration)\BlueCollar.pdb"/>
+      <Reference40Outputs Include="Source\BlueCollar40\bin\$(Configuration)\BlueCollar.xml"/>
+    </ItemGroup>
+    <MakeDir Directories="$(BuildDir);$(BuildDir)\Reference Assemblies;$(BuildDir)\Reference Assemblies\Framework 3.5;$(BuildDir)\Reference Assemblies\Framework 4.0"/>
+    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(BuildDir)"/>
+    <Copy SourceFiles="@(Reference35Outputs)" DestinationFolder="$(BuildDir)\Reference Assemblies\Framework 3.5"/>
+    <Copy SourceFiles="@(Reference40Outputs)" DestinationFolder="$(BuildDir)\Reference Assemblies\Framework 4.0"/>
     <CallTarget Targets="BuildTestApps"/>
   </Target>
 
@@ -46,6 +70,7 @@
   <Target Name="Clean">
     <MSBuild Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=$(Configuration)"/>
     <MSBuild Projects="@(TestAppProjects)" Targets="Clean"/>
+    <RemoveDir Directories="$(BuildDir)"/>
   </Target>
 
   <Target Name="Package" DependsOnTargets="Build">
@@ -72,7 +97,7 @@
     <Copy SourceFiles="installer.wxs" DestinationFolder="$(TempDir)"/>
 
     <Exec Command='"$(WixDir)\candle.exe" "$(TempDir)\installer.wxs"' WorkingDirectory="$(TempDir)"/>
-    <Exec Command='"$(WixDir)\light.exe" -ext WixUIExtension -out BlueCollar.msi "$(TempDir)\installer.wixobj"' WorkingDirectory="$(TempDir)"/>
+    <Exec Command='"$(WixDir)\light.exe" -ext WixUIExtension -ext WiXNetFxExtension -out BlueCollar.msi "$(TempDir)\installer.wixobj"' WorkingDirectory="$(TempDir)"/>
     <Copy SourceFiles="$(TempDir)\BlueCollar.msi" DestinationFolder="$(BuildDir)"/>
     <RemoveDir Directories="$(TempDir)"/>
   </Target>

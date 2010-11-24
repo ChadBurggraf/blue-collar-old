@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
   <Product Name="Blue Collar" Id="0870DFD2-A7DF-49EF-8EE1-F13D5B078626" UpgradeCode="AE5FF182-92B9-4CA6-AE1E-52342F775AF7" Version="0.7.0" Manufacturer="Tasty Codes" Language="1033">
     <Package Description="Blue Collar Installer" Compressed="yes"/>
 
     <Media Id="1" Cabinet="BlueCollar.cab" EmbedCab="yes"/>
+
+    <PropertyRef Id="NETFRAMEWORK35"/>
+    <PropertyRef Id="NETFRAMEWORK40FULL"/>
+    
+    <Condition Message="Blue Collar requires the .NET Framework v3.5. Please install the .NET Framework v3.5 and then run the installer again">
+      <![CDATA[Installed OR NETFRAMEWORK35]]>
+    </Condition>
     
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="PFiles">
@@ -34,6 +41,18 @@
                 <File Id="BlueCollarPDB35" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.pdb"/>
                 <File Id="BlueCollarXML35" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.xml"/>
               </Component>
+              
+              <Directory Id="GAC35" Name="GAC">
+                <Component Id="GAC35" Guid="3DE2B7D7-E0A4-4ADA-9A04-47C90B70D2FE">
+                  <File Id="BlueCollarDLL35GAC" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.dll" Assembly=".net" KeyPath="yes"/>
+                </Component>
+              </Directory>
+
+              <Component Id="Framework35AssemblyFolder" Guid="D3B0873F-F8E9-4682-B4F5-C5FE3486B004">
+                <RegistryKey Root="HKLM" Key="Software\Microsoft\.NETFramework\AssemblyFolders\Blue Collar .NET 3.5" Action="createAndRemoveOnUninstall">
+                  <RegistryValue Type="string" Value="[$Framework35AssemblyFolder]"/>
+                </RegistryKey>
+              </Component>
             </Directory>
             
             <Directory Id="Framework40" Name="Framework 4.0">
@@ -41,6 +60,24 @@
                 <File Id="BlueCollarDLL40" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" KeyPath="yes"/>
                 <File Id="BlueCollarPDB40" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.pdb"/>
                 <File Id="BlueCollarXML40" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.xml"/>
+              </Component>
+              
+              <Directory Id="GAC40" Name="GAC">
+                <Component Id="GAC40" Guid="F5412658-B7A2-4026-B910-6B900B832897">
+                  <Condition>
+                    <![CDATA[Installed OR NETFRAMEWORK40FULL]]>
+                  </Condition>
+                  <File Id="BlueCollarDLL40GAC" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" Assembly=".net" KeyPath="yes"/>
+                </Component>
+              </Directory>
+
+              <Component Id="Framework40AssemblyFolder" Guid="9F08EFCA-41F4-4C80-99E7-AFBACCB3CA5C">
+                <Condition>
+                  <![CDATA[Installed OR NETFRAMEWORK40FULL]]>
+                </Condition>
+                <RegistryKey Root="HKLM" Key="Software\Microsoft\.NETFramework\AssemblyFolders\Blue Collar .NET 4.0" Action="createAndRemoveOnUninstall">
+                  <RegistryValue Type="string" Value="[$Framework40AssemblyFolder]"/>
+                </RegistryKey>
               </Component>
             </Directory>
           </Directory>
@@ -55,7 +92,11 @@
     <Feature Id="Complete" Title="Blue Collar" Level="1" Description="Blue Collar runtime assemblies and source code." Display="expand" ConfigurableDirectory="INSTALLDIR">
       <ComponentRef Id="Application"/>
       <ComponentRef Id="Framework35"/>
+      <ComponentRef Id="GAC35"/>
+      <ComponentRef Id="Framework35AssemblyFolder"/>
       <ComponentRef Id="Framework40"/>
+      <ComponentRef Id="GAC40"/>
+      <ComponentRef Id="Framework40AssemblyFolder"/>
       <ComponentRef Id="Source"/>
     </Feature>
 
