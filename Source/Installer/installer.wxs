@@ -7,6 +7,8 @@
 
     <PropertyRef Id="NETFRAMEWORK35"/>
     <PropertyRef Id="NETFRAMEWORK40FULL"/>
+    <WixVariable Id="WixUIBannerBmp" Value="bannrbmp.bmp"/>
+    <WixVariable Id="WixUIDialogBmp" Value="dlgbmp.bmp"/>
     
     <Condition Message="Blue Collar requires the .NET Framework v3.5. Please install the .NET Framework v3.5 and then run the installer again">
       <![CDATA[Installed OR NETFRAMEWORK35]]>
@@ -100,8 +102,11 @@
       <ComponentRef Id="Source"/>
     </Feature>
 
-    <UIRef Id="WixUI_InstallDir"/>
-    <UIRef Id="WixUI_ErrorProgressText"/>
-    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"/>
+    <UI>
+      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"/>
+      <UIRef Id="WixUI_InstallDir" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">1</Publish>
+    </UI>
   </Product>
 </Wix>

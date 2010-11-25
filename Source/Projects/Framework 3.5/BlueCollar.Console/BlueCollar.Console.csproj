@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2D7E3CDF-1B1F-40E0-AE56-C09216F2AFEB}</ProjectGuid>
+    <ProjectGuid>{C0F2FD2A-8314-41A6-8181-2F7ED654784A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BlueCollar.Console</RootNamespace>
@@ -23,73 +23,69 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE;NET35</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mono.Security, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+    <Reference Include="NDesk.Options, Version=0.2.1.0, Culture=neutral, PublicKeyToken=8c90c5e0ae183f01, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lib\Mono.Security.dll</HintPath>
-    </Reference>
-    <Reference Include="NDesk.Options">
-      <HintPath>..\..\Lib\NDesk.Options.dll</HintPath>
+      <HintPath>..\..\..\..\Lib\NDesk.Options.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lib\NLog.dll</HintPath>
-    </Reference>
-    <Reference Include="Npgsql, Version=2.0.9.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lib\Npgsql.dll</HintPath>
+      <HintPath>..\..\..\..\Lib\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data.SQLite, Version=1.0.66.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lib\System.Data.SQLite.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\BlueCollar.Console\BlueCollarConsole.cs">
+    <Compile Include="..\..\..\BlueCollar.Console\BlueCollarConsole.cs">
       <Link>BlueCollarConsole.cs</Link>
     </Compile>
-    <Compile Include="..\BlueCollar.Console\FileSystemEventType.cs">
+    <Compile Include="..\..\..\BlueCollar.Console\FileSystemEventType.cs">
       <Link>FileSystemEventType.cs</Link>
     </Compile>
-    <Compile Include="..\BlueCollar.Console\FileSystemWatcher.cs">
+    <Compile Include="..\..\..\BlueCollar.Console\FileSystemWatcher.cs">
       <Link>FileSystemWatcher.cs</Link>
     </Compile>
-    <Compile Include="..\BlueCollar.Console\FileSystemWatcherMode.cs">
+    <Compile Include="..\..\..\BlueCollar.Console\FileSystemWatcherMode.cs">
       <Link>FileSystemWatcherMode.cs</Link>
     </Compile>
-    <Compile Include="..\BlueCollar.Console\JobRunnerBootstraps.cs">
+    <Compile Include="..\..\..\BlueCollar.Console\JobRunnerBootstraps.cs">
       <Link>JobRunnerBootstraps.cs</Link>
     </Compile>
-    <Compile Include="..\Common\SolutionInfo.cs">
+    <Compile Include="..\..\..\Common\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BlueCollar35\BlueCollar35.csproj">
-      <Project>{07FD8831-E6BC-4F49-924F-9993C1FCA6BA}</Project>
-      <Name>BlueCollar35</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
+      <Project>{DAA513BD-1987-4337-A7C0-51793EABA34A}</Project>
+      <Name>BlueCollar</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
 </Project>

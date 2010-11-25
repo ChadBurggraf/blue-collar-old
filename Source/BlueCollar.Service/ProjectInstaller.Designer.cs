@@ -1,11 +1,19 @@
-﻿namespace BlueCollar.Service
+﻿//-----------------------------------------------------------------------
+// <copyright file="ProjectInstaller.designer.cs" company="Tasty Codes">
+//     Copyright (c) 2010 Chad Burggraf.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace BlueCollar.Service
 {
-    partial class ProjectInstaller
+    /// <summary>
+    /// Service installer designer.
+    /// </summary>
+    public partial class ProjectInstaller
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
+        private System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
+        private System.ServiceProcess.ServiceInstaller serviceInstaller1;
 
         /// <summary> 
         /// Clean up any resources being used.
@@ -17,10 +25,9 @@
             {
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
-
-        #region Component Designer generated code
 
         /// <summary>
         /// Required method for Designer support - do not modify
@@ -46,15 +53,7 @@
             // 
             // ProjectInstaller
             // 
-            this.Installers.AddRange(new System.Configuration.Install.Installer[] {
-            this.serviceProcessInstaller1,
-            this.serviceInstaller1});
-
+            this.Installers.AddRange(new System.Configuration.Install.Installer[] { this.serviceProcessInstaller1, this.serviceInstaller1 });
         }
-
-        #endregion
-
-        private System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
-        private System.ServiceProcess.ServiceInstaller serviceInstaller1;
     }
 }

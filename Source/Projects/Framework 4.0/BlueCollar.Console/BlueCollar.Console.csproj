@@ -5,12 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D92E5238-0919-4D81-9DB8-D045518C17E8}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <ProjectGuid>{EDB2FA27-1E11-4355-AADC-F23E032E52AE}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BlueCollar.Service</RootNamespace>
-    <AssemblyName>collar_service</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>BlueCollar.Console</RootNamespace>
+    <AssemblyName>collar_40</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -19,72 +20,70 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET35;CODE_ANALYSIS</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
-    <DebugType>none</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NET35</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NDesk.Options">
+      <HintPath>..\..\..\..\Lib\NDesk.Options.dll</HintPath>
+    </Reference>
     <Reference Include="NLog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lib\NLog.dll</HintPath>
+      <HintPath>..\..\..\..\Lib\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data" />
-    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Common\ConfigurationElementCollection.cs">
-      <Link>ConfigurationElementCollection.cs</Link>
+    <Compile Include="..\..\..\BlueCollar.Console\BlueCollarConsole.cs">
+      <Link>BlueCollarConsole.cs</Link>
     </Compile>
-    <Compile Include="..\Common\SolutionInfo.cs">
+    <Compile Include="..\..\..\BlueCollar.Console\FileSystemEventType.cs">
+      <Link>FileSystemEventType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\BlueCollar.Console\FileSystemWatcher.cs">
+      <Link>FileSystemWatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\BlueCollar.Console\FileSystemWatcherMode.cs">
+      <Link>FileSystemWatcherMode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\BlueCollar.Console\JobRunnerBootstraps.cs">
+      <Link>JobRunnerBootstraps.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Common\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
-    <Compile Include="ApplicationElement.cs" />
-    <Compile Include="ApplicationElementCollection.cs" />
-    <Compile Include="BlueCollarService.cs" />
-    <Compile Include="BlueCollarServiceSection.cs" />
-    <Compile Include="FrameworkVersion.cs" />
-    <Compile Include="ProjectInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="ProjectInstaller.Designer.cs">
-      <DependentUpon>ProjectInstaller.cs</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Service.designer.cs">
-      <DependentUpon>Service.cs</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
+    <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
+      <Project>{138F10FF-16AE-4BB2-A6BC-56CE41F582E2}</Project>
+      <Name>BlueCollar</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ProjectInstaller.resx">
-      <DependentUpon>ProjectInstaller.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Service.resx">
-      <DependentUpon>Service.cs</DependentUpon>
-    </EmbeddedResource>
+    <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
 </Project>

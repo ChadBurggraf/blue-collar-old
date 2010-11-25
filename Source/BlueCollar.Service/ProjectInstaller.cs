@@ -1,19 +1,27 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Configuration.Install;
-using System.Linq;
-
+﻿//-----------------------------------------------------------------------
+// <copyright file="ProjectInstaller.cs" company="Tasty Codes">
+//     Copyright (c) 2010 Chad Burggraf.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace BlueCollar.Service
 {
+    using System;
+    using System.ComponentModel;
+    using System.Configuration.Install;
+
+    /// <summary>
+    /// Service installer.
+    /// </summary>
     [RunInstaller(true)]
-    public partial class ProjectInstaller : System.Configuration.Install.Installer
+    public partial class ProjectInstaller : Installer
     {
+        /// <summary>
+        /// Initializes a new instance of the ProjectInstaller class.
+        /// </summary>
         public ProjectInstaller()
         {
-            InitializeComponent();
+            this.InitializeComponent();
         }
     }
 }

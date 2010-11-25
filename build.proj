@@ -7,6 +7,8 @@
     <BuildDir>$(MSBuildProjectDirectory)\Build</BuildDir>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <EnableSigning Condition="'$(EnableSigning)' == ''">true</EnableSigning>
+    <Net35ProjectsDir>$(MSBuildProjectDirectory)\Source\Projects\Framework 3.5</Net35ProjectsDir>
+    <Net40ProjectsDir>$(MSBuildProjectDirectory)\Source\Projects\Framework 4.0</Net40ProjectsDir>
     <SignAssembly>false</SignAssembly>
     <TempDir>$(MSBuildProjectDirectory)\PackageTemp</TempDir>
     <TestAppsDir>$(MSBuildProjectDirectory)\TestApps</TestAppsDir>
@@ -17,11 +19,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectsToBuild Include="Source\BlueCollar35\BlueCollar35.csproj"/>
-    <ProjectsToBuild Include="Source\BlueCollar40\BlueCollar40.csproj"/>
-    <ProjectsToBuild Include="Source\BlueCollar.Console35\BlueCollar.Console35.csproj"/>
-    <ProjectsToBuild Include="Source\BlueCollar.Console40\BlueCollar.Console40.csproj"/>
-    <ProjectsToBuild Include="Source\BlueCollar.Service\BlueCollar.Service.csproj"/>
+    <ProjectsToBuild Include="$(Net35ProjectsDir)\BlueCollar\BlueCollar.csproj"/>
+    <ProjectsToBuild Include="$(Net35ProjectsDir)\BlueCollar.Console\BlueCollar.Console.csproj"/>
+    <ProjectsToBuild Include="$(Net35ProjectsDir)\BlueCollar.Service\BlueCollar.Service.csproj"/>
+    <ProjectsToBuild Include="$(Net40ProjectsDir)\BlueCollar\BlueCollar.csproj"/>
+    <ProjectsToBuild Include="$(Net40ProjectsDir)\BlueCollar.Console\BlueCollar.Console.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -32,28 +34,28 @@
   <Target Name="Build" DependsOnTargets="Clean">
     <MSBuild  Projects="@(ProjectsToBuild)" Properties="Configuration=$(Configuration);SignAssembly=$(SignAssembly);AssemblyOriginatorKeyFile=$(AssemblyOriginatorKeyFile)"/>
     <ItemGroup>
-      <BuildOutputs Include="Source\BlueCollar.Console35\bin\$(Configuration)\collar_35.exe"/>
-      <BuildOutputs Include="Source\BlueCollar.Console35\bin\$(Configuration)\collar_35.exe.config"/>
-      <BuildOutputs Include="Source\BlueCollar.Console40\bin\$(Configuration)\collar_40.exe"/>
-      <BuildOutputs Include="Source\BlueCollar.Console40\bin\$(Configuration)\collar_40.exe.config"/>
-      <BuildOutputs Include="Source\BlueCollar.Service\bin\$(Configuration)\collar_service.exe"/>
-      <BuildOutputs Include="Source\BlueCollar.Service\bin\$(Configuration)\collar_service.exe.config"/>
-      <BuildOutputs Include="Lib\Mono.Security.dll"/>
-      <BuildOutputs Include="Lib\NDesk.Options.dll"/>
-      <BuildOutputs Include="Lib\NLog.dll"/>
-      <BuildOutputs Include="Lib\NLog.xml"/>
-      <BuildOutputs Include="Lib\Npgsql.dll"/>
-      <BuildOutputs Include="Lib\System.Data.SQLite.dll"/>
-      <BuildOutputs Include="Lib\System.Data.SQLite.xml"/>
-      <Reference35Outputs Include="Source\BlueCollar35\bin\$(Configuration)\BlueCollar.dll"/>
-      <Reference35Outputs Include="Source\BlueCollar35\bin\$(Configuration)\BlueCollar.pdb"/>
-      <Reference35Outputs Include="Source\BlueCollar35\bin\$(Configuration)\BlueCollar.xml"/>
-      <Reference40Outputs Include="Source\BlueCollar40\bin\$(Configuration)\BlueCollar.dll"/>
-      <Reference40Outputs Include="Source\BlueCollar40\bin\$(Configuration)\BlueCollar.pdb"/>
-      <Reference40Outputs Include="Source\BlueCollar40\bin\$(Configuration)\BlueCollar.xml"/>
+      <BuildOutputs Include="$(Net35ProjectsDir)\BlueCollar.Console\bin\$(Configuration)\collar_35.exe"/>
+      <BuildOutputs Include="$(Net35ProjectsDir)\BlueCollar.Console\bin\$(Configuration)\collar_35.exe.config"/>
+      <BuildOutputs Include="$(Net35ProjectsDir)\BlueCollar.Service\bin\$(Configuration)\collar_service.exe"/>
+      <BuildOutputs Include="$(Net35ProjectsDir)\BlueCollar.Service\bin\$(Configuration)\collar_service.exe.config"/>
+      <BuildOutputs Include="$(Net40ProjectsDir)\BlueCollar.Console\bin\$(Configuration)\collar_40.exe"/>
+      <BuildOutputs Include="$(Net40ProjectsDir)\BlueCollar.Console\bin\$(Configuration)\collar_40.exe.config"/>
+      <Libs Include="Lib\Mono.Security.dll"/>
+      <Libs Include="Lib\NDesk.Options.dll"/>
+      <Libs Include="Lib\NLog.dll"/>
+      <Libs Include="Lib\NLog.xml"/>
+      <Libs Include="Lib\Npgsql.dll"/>
+      <Libs Include="Lib\System.Data.SQLite.dll"/>
+      <Libs Include="Lib\System.Data.SQLite.xml"/>
+      <Reference35Outputs Include="$(Net35ProjectsDir)\BlueCollar\bin\$(Configuration)\BlueCollar.dll"/>
+      <Reference35Outputs Include="$(Net35ProjectsDir)\BlueCollar\bin\$(Configuration)\BlueCollar.pdb"/>
+      <Reference35Outputs Include="$(Net35ProjectsDir)\BlueCollar\bin\$(Configuration)\BlueCollar.xml"/>
+      <Reference40Outputs Include="$(Net40ProjectsDir)\BlueCollar\bin\$(Configuration)\BlueCollar.dll"/>
+      <Reference40Outputs Include="$(Net40ProjectsDir)\BlueCollar\bin\$(Configuration)\BlueCollar.pdb"/>
+      <Reference40Outputs Include="$(Net40ProjectsDir)\BlueCollar\bin\$(Configuration)\BlueCollar.xml"/>
     </ItemGroup>
     <MakeDir Directories="$(BuildDir);$(BuildDir)\Reference Assemblies;$(BuildDir)\Reference Assemblies\Framework 3.5;$(BuildDir)\Reference Assemblies\Framework 4.0"/>
-    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(BuildDir)"/>
+    <Copy SourceFiles="@(BuildOutputs);@(Libs)" DestinationFolder="$(BuildDir)"/>
     <Copy SourceFiles="@(Reference35Outputs)" DestinationFolder="$(BuildDir)\Reference Assemblies\Framework 3.5"/>
     <Copy SourceFiles="@(Reference40Outputs)" DestinationFolder="$(BuildDir)\Reference Assemblies\Framework 4.0"/>
     <CallTarget Targets="BuildTestApps"/>
@@ -79,7 +81,7 @@
     
     <ItemGroup>
       <BuildFiles Include="$(BuildDir)\**\*"/>
-      <SourceFiles Include="build-and-package.bat;build.proj;installer.wxs"/>
+      <SourceFiles Include="build-and-package.bat;build.proj"/>
       <SourceFiles Include="**\Lib\*"/>
       <SourceFiles Include="**\Source\**\*"/>
       <SourceFiles Include="**\TestApps\**\*"/>
@@ -89,12 +91,14 @@
       <SourceFiles Remove="**\Source\BlueCollar.Test\App.config"/>
       <SourceFiles Remove="**\TestApps\**\bin\**\*;**\TestApps\**\obj\**\*"/>
       <SourceFiles Remove="**\TestApps\**\App_Data\*.s3db"/>
+      <InstallerFiles Include="Source\Installer\*.bmp"/>
+      <InstallerFiles Include="Source\Installer\*.wxs"/>
     </ItemGroup>
 
     <MakeDir Directories="$(TempDir)"/>
     <Zip Files="@(SourceFiles)" ZipFileName="$(TempDir)\BlueCollar-Src.zip"/>
     <Copy SourceFiles="@(BuildFiles)" DestinationFiles="@(BuildFiles->'$(TempDir)\%(RecursiveDir)%(Filename)%(Extension)')"/>
-    <Copy SourceFiles="installer.wxs" DestinationFolder="$(TempDir)"/>
+    <Copy SourceFiles="@(InstallerFiles)" DestinationFolder="$(TempDir)"/>
 
     <Exec Command='"$(WixDir)\candle.exe" "$(TempDir)\installer.wxs"' WorkingDirectory="$(TempDir)"/>
     <Exec Command='"$(WixDir)\light.exe" -ext WixUIExtension -ext WiXNetFxExtension -out BlueCollar.msi "$(TempDir)\installer.wixobj"' WorkingDirectory="$(TempDir)"/>

@@ -169,8 +169,6 @@ namespace BlueCollar.Service
         /// <summary>
         /// Creates the configuration to use for logging.
         /// </summary>
-        /// <param name="console">A value indicating whether logging to the console is enabled.</param>
-        /// <param name="file">A value indicating whether logging to a file is enabled.</param>
         /// <param name="filePath">The path of the log file to write to, if applicable.</param>
         /// <returns>The created logging configuration.</returns>
         private static LoggingConfiguration CreateLoggingConfiguration(string filePath)
