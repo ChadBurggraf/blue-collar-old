@@ -17,7 +17,7 @@ namespace BlueCollar.Test
     [TestClass]
     public class RunningJobsTests
     {
-        private static string persistencPath = Path.Combine(Environment.CurrentDirectory, Guid.NewGuid().ToString().Hash() + ".xml");
+        private static string persistencPath = Path.Combine(Environment.CurrentDirectory, Guid.NewGuid().ToString().Hash() + ".bin");
 
         /// <summary>
         /// Flush tests.

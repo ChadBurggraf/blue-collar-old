@@ -61,9 +61,22 @@ namespace BlueCollar.Console
         /// associated job assemblies to bootstrap.</param>
         /// <param name="configurationFilePath">The path to the target application's configuration file.</param>
         public JobRunnerBootstraps(string basePath, string configurationFilePath)
+            : this(basePath, configurationFilePath, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the JobRunnerBootstraps class.
+        /// </summary>
+        /// <param name="basePath">The base path of the target directory containing the Tasty.dll and
+        /// associated job assemblies to bootstrap.</param>
+        /// <param name="configurationFilePath">The path to the target application's configuration file.</param>
+        /// <param name="runningJobsPersistencePath">The path to the running jobs persistence file to use.</param>
+        public JobRunnerBootstraps(string basePath, string configurationFilePath, string runningJobsPersistencePath)
         {
             this.BasePath = basePath;
             this.ConfigurationFilePath = configurationFilePath;
+            this.RunningJobsPersistencePath = runningJobsPersistencePath;
         }
 
         #endregion
@@ -141,6 +154,11 @@ namespace BlueCollar.Console
         /// Gets a value indicating whether the target application has been successfully loaded.
         /// </summary>
         public bool IsLoaded { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the path to use for running jobs persistence.
+        /// </summary>
+        public string RunningJobsPersistencePath { get; set; }
 
         #endregion
 
@@ -299,6 +317,7 @@ namespace BlueCollar.Console
 
             this.domain = AppDomain.CreateDomain("Blue Collar Job Runner", AppDomain.CurrentDomain.Evidence, setup);
             this.proxy = (JobRunnerProxy)this.domain.CreateInstanceAndUnwrap(typeof(JobRunnerProxy).Assembly.FullName, typeof(JobRunnerProxy).FullName);
+            this.proxy.RunningJobsPersistencePath = this.RunningJobsPersistencePath;
 
             this.eventSink = new JobRunnerEventSink();
             this.eventSink.AllFinished += new EventHandler(this.ProxyAllFinished);

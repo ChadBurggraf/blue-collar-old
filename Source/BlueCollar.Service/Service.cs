@@ -30,6 +30,7 @@ namespace BlueCollar.Service
     {
         #region Private Fields
 
+        private static readonly Regex FileNameExpression = new Regex(@"[^a-zA-Z0-9_-]+", RegexOptions.Compiled);
         private static string currentDirectory, logsDirectory;
         private static Logger logger;
         private ProcessTuple[] processes = new ProcessTuple[0];
@@ -210,10 +211,20 @@ namespace BlueCollar.Service
             }
             else
             {
-                path = Path.Combine(Path.Combine(CurrentDirectory, "Logs"), String.Concat(Regex.Replace(element.Name, @"[^a-zA-Z0-9]+", String.Empty), ".log"));
+                path = Path.Combine(Path.Combine(CurrentDirectory, "Logs"), String.Concat(FileNameExpression.Replace(element.Name, String.Empty), ".log"));
             }
 
             return Path.GetFullPath(path);
+        }
+
+        /// <summary>
+        /// Resolves the running jobs persistence path to use for the given application.
+        /// </summary>
+        /// <param name="element">The application element to resolve the running jobs persistence path for.</param>
+        /// <returns>A resolved persistence path.</returns>
+        private static string ResolvePersistencePath(ApplicationElement element)
+        {
+            return Path.GetFullPath(Path.Combine(Path.Combine(CurrentDirectory, "Persistence"), String.Concat(FileNameExpression.Replace(element.Name, String.Empty), ".bin")));
         }
 
         #endregion
@@ -258,10 +269,11 @@ namespace BlueCollar.Service
                         FileName = exePath,
                         Arguments = String.Format(
                             CultureInfo.InvariantCulture,
-                            @"-d ""{0}"" -c ""{1}"" -l -lf ""{2}""",
+                            @"-d ""{0}"" -c ""{1}"" -l -lf ""{2}"", -p ""{3}""",
                             appElement.Directory,
                             appElement.CfgFile,
-                            ResolveLogPath(appElement))
+                            ResolveLogPath(appElement),
+                            ResolvePersistencePath(appElement))
                     }
                 };
             }

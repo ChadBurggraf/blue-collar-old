@@ -29,7 +29,7 @@ namespace BlueCollar.Console
     {
         private static readonly Regex PathQuotesExp = new Regex(@"^[""']?([^""']*)[""']?$", RegexOptions.Compiled);
         private static object bootstrapsLocker = new object();
-        private static string config, directory;
+        private static string config, directory, persistencePath;
         private static bool autoReload;
         private static int pullUpFailCount;
         private static JobRunnerBootstraps bootstraps;
@@ -54,6 +54,7 @@ namespace BlueCollar.Console
                 { "v|verbose", "write session output to the console.", v => { ++verbose; } },
                 { "l|log", "write session output to a log file.", v => { ++enableLogging; } },
                 { "lf|logfile=", "the path to the log file to write to.", v => logPath = v },
+                { "p|persistence=", "the path to the running jobs persistence path to create/user.", v => persistencePath = v },
                 { "h|help", "display usage help.", v => { ++help; } }
             };
 
@@ -63,6 +64,7 @@ namespace BlueCollar.Console
                 directory = PathQuotesExp.Replace(directory ?? String.Empty, "$1");
                 config = PathQuotesExp.Replace(config ?? String.Empty, "$1");
                 logPath = PathQuotesExp.Replace(logPath ?? String.Empty, "$1");
+                persistencePath = PathQuotesExp.Replace(persistencePath ?? String.Empty, "$1");
             }
             catch (OptionException ex)
             {
@@ -119,6 +121,17 @@ namespace BlueCollar.Console
                 }
 
                 return 1;
+            }
+
+            if (String.IsNullOrEmpty(persistencePath))
+            {
+                string above = Path.GetDirectoryName(directory);
+
+                if (!String.IsNullOrEmpty(above))
+                {
+                    persistencePath = Path.GetFullPath(directory.Substring(above.Length + 1) + ".bin");
+                    logger.Info(CultureInfo.InvariantCulture, "Using defaulted running jobs persistence file at '{0}'.", persistencePath);
+                }
             }
 
             autoReload = true;
@@ -284,7 +297,7 @@ namespace BlueCollar.Console
 
                 try
                 {
-                    bootstraps = new JobRunnerBootstraps(directory, config);
+                    bootstraps = new JobRunnerBootstraps(directory, config, persistencePath);
                     bootstraps.AllFinished += new EventHandler(BootstrapsAllFinished);
                     bootstraps.CancelJob += new EventHandler<JobRecordEventArgs>(BootstrapsCancelJob);
                     bootstraps.ChangeDetected += new EventHandler<FileSystemEventArgs>(BootstrapsChangeDetected);
