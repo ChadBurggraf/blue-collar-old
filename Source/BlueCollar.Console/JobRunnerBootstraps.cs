@@ -298,7 +298,7 @@ namespace BlueCollar.Console
             }
 
             this.domain = AppDomain.CreateDomain("Blue Collar Job Runner", AppDomain.CurrentDomain.Evidence, setup);
-            this.proxy = (JobRunnerProxy)this.domain.CreateInstanceAndUnwrap("BlueCollar", "BlueCollar.JobRunnerProxy");
+            this.proxy = (JobRunnerProxy)this.domain.CreateInstanceAndUnwrap(typeof(JobRunnerProxy).Assembly.FullName, typeof(JobRunnerProxy).FullName);
 
             this.eventSink = new JobRunnerEventSink();
             this.eventSink.AllFinished += new EventHandler(this.ProxyAllFinished);

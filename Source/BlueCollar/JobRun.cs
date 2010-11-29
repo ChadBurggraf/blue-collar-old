@@ -8,14 +8,12 @@ namespace BlueCollar
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
-    using System.Runtime.Serialization;
     using System.Security;
     using System.Threading;
 
     /// <summary>
     /// Represents a single, individually-threaded job run.
     /// </summary>
-    [DataContract]
     public sealed class JobRun
     {
         private Thread executionThread;
@@ -54,6 +52,49 @@ namespace BlueCollar
         }
 
         /// <summary>
+        /// Initializes a new instance of the JobRun class.
+        /// </summary>
+        /// <param name="persisted">The persisted job run to initialize this instance from.</param>
+        public JobRun(PersistedJobRun persisted)
+        {
+            if (persisted == null)
+            {
+                throw new ArgumentNullException("persisted", "persisted cannot be null.");
+            }
+
+            Exception jobEx = null;
+
+            if (!String.IsNullOrEmpty(persisted.JobType) && !String.IsNullOrEmpty(persisted.JobXml))
+            {
+                try
+                {
+                    this.Job = BlueCollar.Job.Deserialize(persisted.JobType, persisted.JobXml);
+                }
+                catch (Exception ex)
+                {
+                    jobEx = ex;
+                }
+            }
+
+            this.ExecutionException = persisted.ExecutionException;
+            this.FinishDate = persisted.FinishDate;
+            this.JobId = persisted.JobId;
+            this.ScheduleName = persisted.ScheduleName;
+            this.StartDate = persisted.StartDate;
+            this.WasRecovered = true;
+
+            if (this.FinishDate == null)
+            {
+                this.FinishDate = DateTime.UtcNow;
+            }
+
+            if (this.ExecutionException == null)
+            {
+                this.ExecutionException = jobEx;
+            }
+        }
+
+        /// <summary>
         /// Event fired when the job run has finished.
         /// </summary>
         public event EventHandler<JobRunEventArgs> Finished;
@@ -61,50 +102,42 @@ namespace BlueCollar
         /// <summary>
         /// Gets an exception that occurred during execution, if applicable.
         /// </summary>
-        [DataMember]
         public Exception ExecutionException { get; private set; }
 
         /// <summary>
         /// Gets the date the run was finished, if applicable.
         /// </summary>
-        [DataMember]
         public DateTime? FinishDate { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether the run is currently in progress.
         /// </summary>
-        [DataMember]
         public bool IsRunning { get; private set; }
 
         /// <summary>
         /// Gets the job being run.
         /// </summary>
-        [IgnoreDataMember]
         public IJob Job { get; private set; }
 
         /// <summary>
         /// Gets the ID of the job being run.
         /// </summary>
-        [DataMember]
         public int JobId { get; private set; }
 
         /// <summary>
         /// Gets the name of the schedule the job run is executing for.
         /// </summary>
-        [DataMember]
         public string ScheduleName { get; private set; }
 
         /// <summary>
         /// Gets the date the job was started, if applicable.
         /// </summary>
-        [DataMember]
         public DateTime? StartDate { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether this instance was created via
         /// recovery from the running jobs persistenc file.
         /// </summary>
-        [DataMember]
         public bool WasRecovered { get; private set; }
 
         /// <summary>
@@ -145,30 +178,13 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Sets this instances properties to reflect that it was recovered
-        /// from persistent storage after a crash or shutdown.
-        /// </summary>
-        /// <param name="now">The date to use as the value of <see cref="FinishDate"/> if it was not set before
-        /// this instance was persisted.</param>
-        public void SetStateForRecovery(DateTime now)
-        {
-            this.IsRunning = false;
-            this.WasRecovered = true;
-
-            if (this.FinishDate == null)
-            {
-                this.FinishDate = now;
-            }
-        }
-
-        /// <summary>
         /// Starts the job if it has not already been run and it is not currently running.
         /// </summary>
         public void Start()
         {
             lock (this)
             {
-                if (!this.IsRunning && this.FinishDate == null)
+                if (!this.IsRunning && this.Job != null && this.FinishDate == null)
                 {
                     this.IsRunning = true;
                     this.StartDate = DateTime.UtcNow;

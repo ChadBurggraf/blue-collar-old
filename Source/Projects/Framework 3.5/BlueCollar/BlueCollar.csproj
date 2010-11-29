@@ -136,6 +136,9 @@
     <Compile Include="..\..\..\BlueCollar\Objects.cs">
       <Link>Objects.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\BlueCollar\PersistedJobRun.cs">
+      <Link>PersistedJobRun.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\BlueCollar\PostgresJobStore.cs">
       <Link>PostgresJobStore.cs</Link>
     </Compile>

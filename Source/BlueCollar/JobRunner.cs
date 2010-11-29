@@ -319,6 +319,12 @@ namespace BlueCollar
 
         #endregion
 
+        #region Public Static Methods
+
+
+
+        #endregion
+
         #region Public Instance Methods
 
         /// <summary>

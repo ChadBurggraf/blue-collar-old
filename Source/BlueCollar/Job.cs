@@ -65,6 +65,39 @@ namespace BlueCollar
 
         #endregion
 
+        #region Public Static Methods
+
+        /// <summary>
+        /// Deserializes the given job type string and serialized data string into an <see cref="IJob"/> instance.
+        /// </summary>
+        /// <param name="jobType">The job type string to deserialize.</param>
+        /// <param name="data">The data string to deserialize.</param>
+        /// <returns>An <see cref="IJob"/> instance.</returns>
+        public static IJob Deserialize(string jobType, string data)
+        {
+            if (String.IsNullOrEmpty(jobType))
+            {
+                throw new ArgumentNullException("jobType", "jobType must contain a value.");
+            }
+
+            if (String.IsNullOrEmpty(data))
+            {
+                throw new ArgumentNullException("data", "data must contain a value.");
+            }
+
+            DataContractSerializer serializer = new DataContractSerializer(Type.GetType(jobType, true));
+
+            using (StringReader sr = new StringReader(data))
+            {
+                using (XmlReader xr = new XmlTextReader(sr))
+                {
+                    return (IJob)serializer.ReadObject(xr);
+                }
+            }
+        }
+
+        #endregion
+
         #region Public Instance Methods
 
         /// <summary>

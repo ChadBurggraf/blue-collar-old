@@ -85,9 +85,8 @@
       <SourceFiles Include="**\Lib\*"/>
       <SourceFiles Include="**\Source\**\*"/>
       <SourceFiles Include="**\TestApps\**\*"/>
-      <SourceFiles Include="**\Tools\**\*"/>
       <SourceFiles Remove="**\*.csproj.user;**\*.snk;**\*.suo;**\*.vsmdi;**\StyleCop.Cache;**\testimpactdata.sdf"/>
-      <SourceFiles Remove="**\Source\TestResults\**\*;**\Source\**\bin\**\*;**\Source\**\obj\**\*"/>
+      <SourceFiles Remove="**\Source\**\TestResults\**\*;**\Source\**\bin\**\*;**\Source\**\obj\**\*"/>
       <SourceFiles Remove="**\Source\BlueCollar.Test\App.config"/>
       <SourceFiles Remove="**\TestApps\**\bin\**\*;**\TestApps\**\obj\**\*"/>
       <SourceFiles Remove="**\TestApps\**\App_Data\*.s3db"/>

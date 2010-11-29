@@ -48,6 +48,16 @@ namespace BlueCollar.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the default path to use for the running jobs state file.
+        /// </summary>
+        [ConfigurationProperty("persistencePath", IsRequired = false, DefaultValue = "BlueCollarRunningJobs.bc")]
+        public string PersistencePath
+        {
+            get { return (string)this["persistencePath"]; }
+            set { this["persistencePath"] = value; }
+        }
+
+        /// <summary>
         /// Gets or sets the timeout (in milliseconds) to use when re-enqueing failed
         /// jobs that have retries available.
         /// </summary>

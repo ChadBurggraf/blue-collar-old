@@ -149,17 +149,9 @@ namespace BlueCollar
 
             try
             {
-                DataContractSerializer serializer = new DataContractSerializer(Type.GetType(this.JobType, true));
-
-                using (StringReader sr = new StringReader(this.Data))
-                {
-                    using (XmlReader xr = new XmlTextReader(sr))
-                    {
-                        IJob job = (IJob)serializer.ReadObject(xr);
-                        job.TryNumber = this.TryNumber;
-                        return job;
-                    }
-                }
+                IJob job = Job.Deserialize(this.JobType, this.Data);
+                job.TryNumber = this.TryNumber;
+                return job;
             }
             catch (Exception ex)
             {

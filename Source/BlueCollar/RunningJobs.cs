@@ -13,24 +13,25 @@ namespace BlueCollar
     using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
+    using System.Runtime.Serialization.Formatters.Binary;
     using System.Security;
     using System.Security.Permissions;
+    using BlueCollar.Configuration;
 
     /// <summary>
     /// Represents a collection of running jobs that can be flushed to disk.
     /// </summary>
-    [DataContract]
     public sealed class RunningJobs
     {
-        private static readonly string defaultPersistencPath = Path.Combine(Path.GetTempPath(), "BlueCollarRunningJobs.xml");
-        private static readonly object persistenceFileLocker = new object();
+        private readonly object persistenceFileLocker = new object();
+        private string persistencePath;
         private List<JobRun> runs;
 
         /// <summary>
         /// Initializes a new instance of the RunningJobs class.
         /// </summary>
         public RunningJobs()
-            : this(defaultPersistencPath)
+            : this(BlueCollarSection.Current.PersistencePath)
         {
         }
 
@@ -40,18 +41,8 @@ namespace BlueCollar
         /// <param name="persistencePath">The persistence path to use when persisting run data.</param>
         public RunningJobs(string persistencePath)
         {
-            if (String.IsNullOrEmpty(persistencePath))
-            {
-                persistencePath = defaultPersistencPath;
-            }
-
-            if (!Path.IsPathRooted(persistencePath))
-            {
-                persistencePath = Path.GetFullPath(persistencePath);
-            }
-
             this.PersistencePath = persistencePath;
-            this.runs = new List<JobRun>(LoadFromPersisted(this.PersistencePath));
+            this.runs = new List<JobRun>(LoadFromPersisted());
         }
 
         /// <summary>
@@ -63,9 +54,36 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Gets the path used to persist the running jobs state.
+        /// Gets or sets the path used to persist the running jobs state.
         /// </summary>
-        public string PersistencePath { get; private set; }
+        public string PersistencePath
+        {
+            get
+            {
+                lock (this.persistenceFileLocker)
+                {
+                    return this.persistencePath;
+                }
+            }
+
+            set
+            {
+                lock (this.persistenceFileLocker)
+                {
+                    this.persistencePath = value;
+
+                    if (String.IsNullOrEmpty(persistencePath))
+                    {
+                        this.persistencePath = BlueCollarSection.Current.PersistencePath;
+                    }
+
+                    if (!Path.IsPathRooted(persistencePath))
+                    {
+                        this.persistencePath = Path.GetFullPath(persistencePath);
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Clears all fo the job runs this instance is maintaining.
@@ -75,6 +93,20 @@ namespace BlueCollar
             lock (this.runs)
             {
                 this.runs.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Deletes this instance's persisted state from disk.
+        /// </summary>
+        public void Delete()
+        {
+            lock (this.persistenceFileLocker)
+            {
+                if (CanWriteToPersisted(this.PersistencePath) && File.Exists(this.PersistencePath))
+                {
+                    File.Delete(this.PersistencePath);
+                }
             }
         }
 
@@ -141,19 +173,15 @@ namespace BlueCollar
         {
             lock (this.runs)
             {
-                lock (persistenceFileLocker)
+                lock (this.persistenceFileLocker)
                 {
                     if (CanWriteToPersisted(this.PersistencePath))
                     {
-                        var exceptionTypes = (from r in this.runs
-                                              where r.ExecutionException != null
-                                              select r.ExecutionException.GetType()).Distinct();
-
-                        DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]), exceptionTypes);
+                        BinaryFormatter formatter = new BinaryFormatter();
 
                         using (FileStream stream = File.Create(this.PersistencePath))
                         {
-                            serializer.WriteObject(stream, this.runs.ToArray());
+                            formatter.Serialize(stream, this.runs.Select(r => new PersistedJobRun(r)).ToArray());
                         }
                     }
                 }
@@ -207,28 +235,27 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Loads a collection of job runs from the given persistence path.
+        /// Loads a collection of job runs from this instance' persistence path.
         /// </summary>
-        /// <param name="persistencePath">The persistence path to load job runs from.</param>
         /// <returns>The loaded job run collection.</returns>
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "It's not worth it to enumarte all of the possible failure scenarios. We're okay with failing in general.")]
-        private static IEnumerable<JobRun> LoadFromPersisted(string persistencePath)
+        private IEnumerable<JobRun> LoadFromPersisted()
         {
             IEnumerable<JobRun> runs;
 
-            lock (persistenceFileLocker)
+            lock (this.persistenceFileLocker)
             {
-                if (CanReadFromPersisted(persistencePath))
+                if (CanReadFromPersisted(this.PersistencePath))
                 {
-                    if (File.Exists(persistencePath))
+                    if (File.Exists(this.PersistencePath))
                     {
-                        DataContractSerializer serializer = new DataContractSerializer(typeof(JobRun[]));
-
+                        BinaryFormatter formatter = new BinaryFormatter();
+                        
                         try
                         {
-                            using (FileStream stream = File.OpenRead(persistencePath))
+                            using (FileStream stream = File.OpenRead(this.PersistencePath))
                             {
-                                runs = (JobRun[])serializer.ReadObject(stream);
+                                runs = ((PersistedJobRun[])formatter.Deserialize(stream)).Select(p => new JobRun(p)).ToArray();
                             }
                         }
                         catch
@@ -245,13 +272,6 @@ namespace BlueCollar
                 {
                     runs = new JobRun[0];
                 }
-            }
-
-            DateTime now = DateTime.UtcNow;
-
-            foreach (JobRun job in runs)
-            {
-                job.SetStateForRecovery(now);
             }
 
             return runs;

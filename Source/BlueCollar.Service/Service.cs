@@ -236,10 +236,10 @@ namespace BlueCollar.Service
                 switch (appElement.FrameworkVersion)
                 {
                     case FrameworkVersion.FourZero:
-                        exePath = Path.Combine(Path.Combine(basePath, "Framework 4.0"), "collar.exe");
+                        exePath = Path.Combine(basePath, "collar_40.exe");
                         break;
                     case FrameworkVersion.ThreeFive:
-                        exePath = Path.Combine(Path.Combine(basePath, "Framework 3.5"), "collar.exe");
+                        exePath = Path.Combine(basePath, "collar_35");
                         break;
                     default:
                         throw new NotImplementedException();
@@ -252,7 +252,9 @@ namespace BlueCollar.Service
                     {
                         CreateNoWindow = true,
                         UseShellExecute = false,
+                        RedirectStandardError = true,
                         RedirectStandardInput = true,
+                        RedirectStandardOutput = true,
                         FileName = exePath,
                         Arguments = String.Format(
                             CultureInfo.InvariantCulture,
@@ -274,11 +276,32 @@ namespace BlueCollar.Service
         {
             Process process = sender as Process;
             ProcessTuple tuple = this.processes.Where(t => t.Process == process).FirstOrDefault();
+            int exitCode = tuple.Process.ExitCode;
+            bool success = exitCode == 0;
+            string output = tuple.Process.StandardError.ReadToEnd();
+            
+            if (String.IsNullOrEmpty(output))
+            {
+                output = tuple.Process.StandardOutput.ReadToEnd();
+            }
 
             tuple.Process.Dispose();
             tuple.Process = null;
-            Logger.Info(CultureInfo.InvariantCulture, "A Blue Collar jobs process has exited for application '{0}'.", tuple.Application.Name);
-            
+
+            if (success)
+            {
+                Logger.Info(CultureInfo.InvariantCulture, "A Blue Collar jobs process has exited for application '{0}'.", tuple.Application.Name);
+            }
+            else
+            {
+                Logger.Error(CultureInfo.InvariantCulture, "A Blue Collar jobs process has failed for application '{0}' with exit code {1}.", tuple.Application.Name, exitCode);
+
+                if (!String.IsNullOrEmpty(output))
+                {
+                    Logger.Error(output);
+                }
+            }
+
             if (this.isRunning)
             {
                 this.StartProcess(tuple);
