@@ -20,19 +20,18 @@ namespace BlueCollar
     /// <summary>
     /// Runs jobs.
     /// </summary>
-    public sealed class JobRunner
+    public sealed class JobRunner : IDisposable
     {
         #region Private Fields
 
-        private static readonly object instanceLocker = new object();
         private readonly object stateLocker = new object();
         private readonly object runLocker = new object();
-        private static JobRunner defaultRunner;
         private ReadOnlyCollection<JobScheduleElement> schedules;
         private IEnumerable<ScheduledJobTuple> scheduledJobs;
         private RunningJobs runs;
         private IJobStore store;
         private Thread god;
+        private bool disposed;
         private bool deleteRecordsOnSuccess;
         private int heartbeat, maximumConcurrency, retryTimeout;
         private DateTime? lastScheduleCheck;
@@ -44,9 +43,17 @@ namespace BlueCollar
         /// <summary>
         /// Initializes a new instance of the JobRunner class.
         /// </summary>
+        public JobRunner()
+            : this(JobStore.Current)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the JobRunner class.
+        /// </summary>
         /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
         public JobRunner(IJobStore store)
-            : this(store, null)
+            : this(store, BlueCollarSection.Current.PersistencePath)
         {
         }
 
@@ -56,14 +63,55 @@ namespace BlueCollar
         /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
         /// <param name="runningJobsPersistencePath">The path to use when saving running jobs state to disk.</param>
         public JobRunner(IJobStore store, string runningJobsPersistencePath)
+            : this(store, runningJobsPersistencePath, BlueCollarSection.Current.Store.DeleteRecordsOnSuccess, BlueCollarSection.Current.Heartbeat, BlueCollarSection.Current.MaximumConcurrency, BlueCollarSection.Current.RetryTimeout)
         {
-            if (store == null)
-            {
-                throw new ArgumentNullException("store", "store cannot be null.");
-            }
+        }
 
+        /// <summary>
+        /// Initializes a new instance of the JobRunner class.
+        /// </summary>
+        /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
+        /// <param name="runningJobsPersistencePath">The path to use when saving running jobs state to disk.</param>
+        /// <param name="deleteRecordsOnSuccess">A value indicating whether to delete records after successful job runs.</param>
+        /// <param name="heartbeat">The heartbeat, in milliseconds, to poll for jobs with.</param>
+        /// <param name="maximumConcurrency">The maximum number of simultaneous jobs to run.</param>
+        /// <param name="retryTimeout">The timeout, in milliseconds, to use for failed job retries.</param>
+        public JobRunner(IJobStore store, string runningJobsPersistencePath, bool deleteRecordsOnSuccess, int heartbeat, int maximumConcurrency, int retryTimeout)
+            : this(store, runningJobsPersistencePath, deleteRecordsOnSuccess, heartbeat, maximumConcurrency, retryTimeout, BlueCollarSection.Current.Schedules)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the JobRunner class.
+        /// </summary>
+        /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
+        /// <param name="runningJobsPersistencePath">The path to use when saving running jobs state to disk.</param>
+        /// <param name="deleteRecordsOnSuccess">A value indicating whether to delete records after successful job runs.</param>
+        /// <param name="heartbeat">The heartbeat, in milliseconds, to poll for jobs with.</param>
+        /// <param name="maximumConcurrency">The maximum number of simultaneous jobs to run.</param>
+        /// <param name="retryTimeout">The timeout, in milliseconds, to use for failed job retries.</param>
+        /// <param name="schedules">The collection of scheduled jobs to run.</param>
+        public JobRunner(IJobStore store, string runningJobsPersistencePath, bool deleteRecordsOnSuccess, int heartbeat, int maximumConcurrency, int retryTimeout, IEnumerable<JobScheduleElement> schedules)
+        {
+            this.store = store ?? JobStore.Current;
             this.runs = new RunningJobs(runningJobsPersistencePath);
-            this.store = store;
+            this.deleteRecordsOnSuccess = deleteRecordsOnSuccess;
+            this.heartbeat = heartbeat < 1 ? 10000 : heartbeat;
+            this.maximumConcurrency = maximumConcurrency < 1 ? 25 : maximumConcurrency;
+            this.retryTimeout = retryTimeout < 1 ? 60000 : retryTimeout;
+            this.SetSchedules(schedules);
+        }
+
+        #endregion
+
+        #region Destruction
+
+        /// <summary>
+        /// Finalizes an instance of the JobRunner class.
+        /// </summary>
+        ~JobRunner()
+        {
+            this.Dispose(false);
         }
 
         #endregion
@@ -116,34 +164,6 @@ namespace BlueCollar
         /// Event raised when a job has been timed out.
         /// </summary>
         public event EventHandler<JobRecordEventArgs> TimeoutJob;
-
-        #endregion
-
-        #region Public Static Properties
-
-        /// <summary>
-        /// Gets the default <see cref="JobRunner"/> instance, which is initialized with the default <see cref="IJobStore"/>.
-        /// </summary>
-        public static JobRunner DefaultRunner
-        {
-            get
-            {
-                lock (instanceLocker)
-                {
-                    if (defaultRunner == null)
-                    {
-                        defaultRunner = new JobRunner(JobStore.Current);
-                        defaultRunner.DeleteRecordsOnSuccess = BlueCollarSection.Current.Store.DeleteRecordsOnSuccess;
-                        defaultRunner.Heartbeat = BlueCollarSection.Current.Heartbeat;
-                        defaultRunner.MaximumConcurrency = BlueCollarSection.Current.MaximumConcurrency;
-                        defaultRunner.RetryTimeout = BlueCollarSection.Current.RetryTimeout;
-                        defaultRunner.SetSchedules(BlueCollarSection.Current.Schedules);
-                    }
-
-                    return defaultRunner;
-                }
-            }
-        }
 
         #endregion
 
@@ -319,13 +339,16 @@ namespace BlueCollar
 
         #endregion
 
-        #region Public Static Methods
-
-
-
-        #endregion
-
         #region Public Instance Methods
+
+        /// <summary>
+        /// Disposes of resources used by this instance.
+        /// </summary>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         /// Pauses the job runner by preventing any new jobs
@@ -379,42 +402,45 @@ namespace BlueCollar
         /// running jobs to complete, or immediately terminate all running jobs.</param>
         public void Stop(bool safely)
         {
+            bool abort = false;
+
             lock (this.stateLocker)
             {
                 if (!safely || !this.IsShuttingDown)
                 {
                     this.IsShuttingDown = true;
                     this.IsRunning = false;
+                    abort = !safely;
+                }
+            }
 
-                    if (!safely)
+            if (abort)
+            {
+                lock (this.runLocker)
+                {
+                    this.runs.AbortAll();
+                    this.runs.Clear();
+                    this.runs.Flush();
+                }
+
+                if (this.god != null && this.god.IsAlive)
+                {
+                    try
                     {
-                        lock (this.runLocker)
-                        {
-                            foreach (JobRun run in this.runs.GetRunning())
-                            {
-                                run.Abort();
-                            }
-
-                            this.runs.Flush();
-                        }
-
-                        if (this.god != null && this.god.IsAlive)
-                        {
-                            try
-                            {
-                                this.god.Abort();
-                                this.god = null;
-                            }
-                            catch (SecurityException)
-                            {
-                            }
-                            catch (ThreadStateException)
-                            {
-                            }
-                        }
-
-                        this.IsShuttingDown = false;
+                        this.god.Abort();
+                        this.god = null;
                     }
+                    catch (SecurityException)
+                    {
+                    }
+                    catch (ThreadStateException)
+                    {
+                    }
+                }
+
+                lock (this.stateLocker)
+                {
+                    this.IsShuttingDown = false;
                 }
             }
         }
@@ -560,6 +586,34 @@ namespace BlueCollar
                         throw;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Disposes of resources used by this instance.
+        /// </summary>
+        /// <param name="disposing">A value indicating whether to dispose of managed resources.</param>
+        private void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    if (this.runs != null)
+                    {
+                        this.runs.AbortAll();
+                        this.runs.Flush();
+                        this.runs = null;
+                    }
+
+                    if (this.god != null && this.god.IsAlive)
+                    {
+                        this.god.Abort();
+                        this.god = null;
+                    }
+                }
+
+                this.disposed = true;
             }
         }
 

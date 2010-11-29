@@ -86,6 +86,20 @@ namespace BlueCollar
         }
 
         /// <summary>
+        /// Aborts all running jobs this instance is tracking.
+        /// </summary>
+        public void AbortAll()
+        {
+            lock (this.runs)
+            {
+                foreach (JobRun run in this.runs)
+                {
+                    run.Abort();
+                }
+            }
+        }
+
+        /// <summary>
         /// Clears all fo the job runs this instance is maintaining.
         /// </summary>
         public void Clear()

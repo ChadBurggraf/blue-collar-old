@@ -111,47 +111,34 @@ namespace BlueCollar.Test
         {
             if (this.Store != null)
             {
-                bool running = JobRunner.DefaultRunner.IsRunning;
-                JobRunner.DefaultRunner.Stop(false);
+                this.Store.DeleteAllJobs();
 
-                try
-                {
-                    this.Store.DeleteAllJobs();
+                string a = Guid.NewGuid().ToString();
+                string b = Guid.NewGuid().ToString();
+                string c = Guid.NewGuid().ToString();
+                string d = Guid.NewGuid().ToString();
 
-                    string a = Guid.NewGuid().ToString();
-                    string b = Guid.NewGuid().ToString();
-                    string c = Guid.NewGuid().ToString();
-                    string d = Guid.NewGuid().ToString();
+                var idA1 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/1/10"), a).Id.Value;
+                var idA2 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/2/10"), a).Id.Value;
+                var idA3 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/3/10"), a).Id.Value;
 
-                    var idA1 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/1/10"), a).Id.Value;
-                    var idA2 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/2/10"), a).Id.Value;
-                    var idA3 = this.CreateAndSaveScheduledSucceeded(new TestIdJob(), DateTime.Parse("2/3/10"), a).Id.Value;
+                var slowA1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), a).Id.Value;
+                var slowA2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), a).Id.Value;
 
-                    var slowA1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), a).Id.Value;
-                    var slowA2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), a).Id.Value;
+                var slowB1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), b).Id.Value;
+                var slowB2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), b).Id.Value;
 
-                    var slowB1 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/2/10"), b).Id.Value;
-                    var slowB2 = this.CreateAndSaveScheduledSucceeded(new TestSlowJob(), DateTime.Parse("2/3/10"), b).Id.Value;
+                var timeoutC1 = this.CreateAndSaveScheduledSucceeded(new TestTimeoutJob(), DateTime.Parse("2/3/10"), c).Id.Value;
 
-                    var timeoutC1 = this.CreateAndSaveScheduledSucceeded(new TestTimeoutJob(), DateTime.Parse("2/3/10"), c).Id.Value;
+                var latest = this.Store.GetLatestScheduledJobs(new string[] { a, b, c, d });
 
-                    var latest = this.Store.GetLatestScheduledJobs(new string[] { a, b, c, d });
+                string idJobType = JobRecord.JobTypeString(typeof(TestIdJob));
+                string slowJobType = JobRecord.JobTypeString(typeof(TestSlowJob));
 
-                    string idJobType = JobRecord.JobTypeString(typeof(TestIdJob));
-                    string slowJobType = JobRecord.JobTypeString(typeof(TestSlowJob));
-
-                    Assert.AreEqual(idA3, latest.Where(r => r.ScheduleName == a && r.JobType == idJobType).FirstOrDefault().Id);
-                    Assert.AreEqual(slowA2, latest.Where(r => r.ScheduleName == a && r.JobType == slowJobType).FirstOrDefault().Id);
-                    Assert.AreEqual(slowB2, latest.Where(r => r.ScheduleName == b).FirstOrDefault().Id);
-                    Assert.AreEqual(timeoutC1, latest.Where(r => r.ScheduleName == c).FirstOrDefault().Id);
-                }
-                finally
-                {
-                    if (running)
-                    {
-                        JobRunner.DefaultRunner.Start();
-                    }
-                }
+                Assert.AreEqual(idA3, latest.Where(r => r.ScheduleName == a && r.JobType == idJobType).FirstOrDefault().Id);
+                Assert.AreEqual(slowA2, latest.Where(r => r.ScheduleName == a && r.JobType == slowJobType).FirstOrDefault().Id);
+                Assert.AreEqual(slowB2, latest.Where(r => r.ScheduleName == b).FirstOrDefault().Id);
+                Assert.AreEqual(timeoutC1, latest.Where(r => r.ScheduleName == c).FirstOrDefault().Id);
             }
         }
 

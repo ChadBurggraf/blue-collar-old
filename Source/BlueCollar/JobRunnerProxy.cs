@@ -14,13 +14,13 @@ namespace BlueCollar
     /// across application domains.
     /// </summary>
     [Serializable]
-    [SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Justification = "False positive.")]
+    //[SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Justification = "False positive.")]
     public sealed class JobRunnerProxy : MarshalByRefObject
     {
         #region Private Fields
 
-        private bool isGreen = true;
-
+        private JobRunner runner;
+        
         #endregion
 
         #region Public Instance Properties
@@ -30,6 +30,12 @@ namespace BlueCollar
         /// </summary>
         public JobRunnerEventSink EventSink { get; set; }
 
+        /// <summary>
+        /// Gets or sets the running jobs persistenc path override to use when creating the proxied job runner, if applicable.
+        /// This property must be set before the first call to <see cref="StartRunner()"/> for it to have any effect.
+        /// </summary>
+        public string RunningJobsPersistencePath { get; set; }
+
         #endregion
 
         #region Public Instance Methods
@@ -37,10 +43,12 @@ namespace BlueCollar
         /// <summary>
         /// Pauses the job runner.
         /// </summary>
-        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Not applicable in our (cross app-domain) scenario.")]
         public void PauseRunner()
         {
-            JobRunner.DefaultRunner.Pause();
+            if (this.runner != null)
+            {
+                this.runner.Pause();
+            }
         }
 
         /// <summary>
@@ -48,33 +56,32 @@ namespace BlueCollar
         /// </summary>
         public void StartRunner()
         {
-            JobRunner runner = JobRunner.DefaultRunner;
-
-            if (this.isGreen)
+            if (this.runner == null)
             {
-                runner.AllFinished += new EventHandler(this.JobRunnerAllFinished);
-                runner.CancelJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerCancelJob);
-                runner.DequeueJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerDequeueJob);
-                runner.Error += new EventHandler<JobErrorEventArgs>(this.JobRunnerError);
-                runner.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerExecuteScheduledJob);
-                runner.FinishJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerFinishJob);
-                runner.RetryEnqueued += new EventHandler<JobRecordEventArgs>(this.JobRunnerRetryEnqueued);
-                runner.TimeoutJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerTimeoutJob);
-
-                this.isGreen = false;
+                this.runner = new JobRunner(null, this.RunningJobsPersistencePath);
+                this.runner.AllFinished += new EventHandler(this.JobRunnerAllFinished);
+                this.runner.CancelJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerCancelJob);
+                this.runner.DequeueJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerDequeueJob);
+                this.runner.Error += new EventHandler<JobErrorEventArgs>(this.JobRunnerError);
+                this.runner.ExecuteScheduledJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerExecuteScheduledJob);
+                this.runner.FinishJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerFinishJob);
+                this.runner.RetryEnqueued += new EventHandler<JobRecordEventArgs>(this.JobRunnerRetryEnqueued);
+                this.runner.TimeoutJob += new EventHandler<JobRecordEventArgs>(this.JobRunnerTimeoutJob);
             }
 
-            runner.Start();
+            this.runner.Start();
         }
 
         /// <summary>
         /// Stops the job runner by issuing a stop command and firing
         /// an <see cref="JobRunnerEventSink.AllFinished"/> event once all running jobs have finished executing.
         /// </summary>
-        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Not applicable in our (cross app-domain) scenario.")]
         public void StopRunner()
         {
-            JobRunner.DefaultRunner.Stop(true);
+            if (this.runner != null)
+            {
+                this.runner.Stop(true);
+            }
         }
 
         #endregion

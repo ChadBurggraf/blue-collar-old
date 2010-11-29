@@ -21,6 +21,7 @@ namespace BlueCollar.Test
     public class JobRunnerTests
     {
         private const int Heartbeat = 1000;
+        private const int MaximumConcurrency = 25;
         private const int RetryTimeout = 500;
         private static int originalHeartbeat, originalRetryTimeout;
         private static IJobStore jobStore;
@@ -33,6 +34,7 @@ namespace BlueCollar.Test
         public static void Cleanup()
         {
             jobRunner.Stop(false);
+            jobRunner.Dispose();
             BlueCollarSection.Current.Heartbeat = originalHeartbeat;
             BlueCollarSection.Current.RetryTimeout = originalRetryTimeout;
         }
@@ -52,12 +54,7 @@ namespace BlueCollar.Test
             jobStore = JobStore.Create();
             jobStore.DeleteAllJobs();
 
-            jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".xml");
-            jobRunner.DeleteRecordsOnSuccess = false;
-            jobRunner.Heartbeat = Heartbeat;
-            jobRunner.MaximumConcurrency = 25;
-            jobRunner.RetryTimeout = RetryTimeout;
-            jobRunner.SetSchedules(null);
+            jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".bin", false, Heartbeat, MaximumConcurrency, RetryTimeout, new JobScheduleElement[0]);
             jobRunner.Error += new EventHandler<JobErrorEventArgs>(JobRunnerError);
             jobRunner.Start();
         }
