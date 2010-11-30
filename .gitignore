@@ -11,4 +11,5 @@ PackageTemp/
 Source/BlueCollar.Test/App.config
 TestApps/Web35/App_Data/BlueCollar.s3db
 TestApps/Web40/App_Data/BlueCollar.s3db
+TestApps/WebInProc35/App_Data/BlueCollar.s3db
 TestResults/

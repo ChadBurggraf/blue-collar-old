@@ -54,7 +54,7 @@ namespace BlueCollar.Test
             jobStore = JobStore.Create();
             jobStore.DeleteAllJobs();
 
-            jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".bin", false, Heartbeat, MaximumConcurrency, RetryTimeout, new JobScheduleElement[0]);
+            jobRunner = new JobRunner(jobStore, Guid.NewGuid().ToString() + ".bin", false, Heartbeat, MaximumConcurrency, RetryTimeout, true, new JobScheduleElement[0]);
             jobRunner.Error += new EventHandler<JobErrorEventArgs>(JobRunnerError);
             jobRunner.Start();
         }

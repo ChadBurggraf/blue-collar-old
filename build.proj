@@ -29,6 +29,7 @@
   <ItemGroup>
     <TestAppProjects Include="$(TestAppsDir)\Web35\Web35.csproj"/>
     <TestAppProjects Include="$(TestAppsDir)\Web40\Web40.csproj"/>
+    <TestAppProjects Include="$(TestAppsDir)\WebInProc35\WebInProc35.csproj"/>
   </ItemGroup>
 
   <Target Name="Build" DependsOnTargets="Clean">
@@ -62,10 +63,11 @@
   </Target>
 
   <Target Name="BuildTestApps">
-    <Delete Files="$(TestAppsDir)\Web35\App_Data\BlueCollar.s3db;$(TestAppsDir)\Web40\App_Data\BlueCollar.s3db"/>
-    <MakeDir Directories="$(TestAppsDir)\Web35\App_Data;$(TestAppsDir)\Web40\App_Data"/>
+    <Delete Files="$(TestAppsDir)\Web35\App_Data\BlueCollar.s3db;$(TestAppsDir)\Web40\App_Data\BlueCollar.s3db;$(TestAppsDir)\WebInProc35\App_Data\BlueCollar.s3db"/>
+    <MakeDir Directories="$(TestAppsDir)\Web35\App_Data;$(TestAppsDir)\Web40\App_Data;$(TestAppsDir)\WebInProc35\App_Data"/>
     <Copy SourceFiles="Source\BlueCollar\BlueCollar.s3db" DestinationFolder="$(TestAppsDir)\Web35\App_Data"/>
     <Copy SourceFiles="Source\BlueCollar\BlueCollar.s3db" DestinationFolder="$(TestAppsDir)\Web40\App_Data"/>
+    <Copy SourceFiles="Source\BlueCollar\BlueCollar.s3db" DestinationFolder="$(TestAppsDir)\WebInProc35\App_Data"/>
     <MSBuild Projects="@(TestAppProjects)"/>
   </Target>
 

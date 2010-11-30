@@ -31,8 +31,7 @@ namespace BlueCollar
         private RunningJobs runs;
         private IJobStore store;
         private Thread god;
-        private bool disposed;
-        private bool deleteRecordsOnSuccess;
+        private bool deleteRecordsOnSuccess, disposed, isEnabled;
         private int heartbeat, maximumConcurrency, retryTimeout;
         private DateTime? lastScheduleCheck;
 
@@ -53,7 +52,7 @@ namespace BlueCollar
         /// </summary>
         /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
         public JobRunner(IJobStore store)
-            : this(store, BlueCollarSection.Current.PersistencePath)
+            : this(store, BlueCollarSection.Current.PersistencePathResolved)
         {
         }
 
@@ -63,7 +62,7 @@ namespace BlueCollar
         /// <param name="store">The <see cref="IJobStore"/> to use when accessing job data.</param>
         /// <param name="runningJobsPersistencePath">The path to use when saving running jobs state to disk.</param>
         public JobRunner(IJobStore store, string runningJobsPersistencePath)
-            : this(store, runningJobsPersistencePath, BlueCollarSection.Current.Store.DeleteRecordsOnSuccess, BlueCollarSection.Current.Heartbeat, BlueCollarSection.Current.MaximumConcurrency, BlueCollarSection.Current.RetryTimeout)
+            : this(store, runningJobsPersistencePath, BlueCollarSection.Current.Store.DeleteRecordsOnSuccess, BlueCollarSection.Current.Heartbeat, BlueCollarSection.Current.MaximumConcurrency, BlueCollarSection.Current.RetryTimeout, BlueCollarSection.Current.Enabled)
         {
         }
 
@@ -76,8 +75,9 @@ namespace BlueCollar
         /// <param name="heartbeat">The heartbeat, in milliseconds, to poll for jobs with.</param>
         /// <param name="maximumConcurrency">The maximum number of simultaneous jobs to run.</param>
         /// <param name="retryTimeout">The timeout, in milliseconds, to use for failed job retries.</param>
-        public JobRunner(IJobStore store, string runningJobsPersistencePath, bool deleteRecordsOnSuccess, int heartbeat, int maximumConcurrency, int retryTimeout)
-            : this(store, runningJobsPersistencePath, deleteRecordsOnSuccess, heartbeat, maximumConcurrency, retryTimeout, BlueCollarSection.Current.Schedules)
+        /// <param name="enabled">A value indicating whether dequeueing new jobs is enabled.</param>
+        public JobRunner(IJobStore store, string runningJobsPersistencePath, bool deleteRecordsOnSuccess, int heartbeat, int maximumConcurrency, int retryTimeout, bool enabled)
+            : this(store, runningJobsPersistencePath, deleteRecordsOnSuccess, heartbeat, maximumConcurrency, retryTimeout, enabled, BlueCollarSection.Current.Schedules)
         {
         }
 
@@ -90,8 +90,9 @@ namespace BlueCollar
         /// <param name="heartbeat">The heartbeat, in milliseconds, to poll for jobs with.</param>
         /// <param name="maximumConcurrency">The maximum number of simultaneous jobs to run.</param>
         /// <param name="retryTimeout">The timeout, in milliseconds, to use for failed job retries.</param>
+        /// <param name="enabled">A value indicating whether dequeueing new jobs is enabled.</param>
         /// <param name="schedules">The collection of scheduled jobs to run.</param>
-        public JobRunner(IJobStore store, string runningJobsPersistencePath, bool deleteRecordsOnSuccess, int heartbeat, int maximumConcurrency, int retryTimeout, IEnumerable<JobScheduleElement> schedules)
+        public JobRunner(IJobStore store, string runningJobsPersistencePath, bool deleteRecordsOnSuccess, int heartbeat, int maximumConcurrency, int retryTimeout, bool enabled, IEnumerable<JobScheduleElement> schedules)
         {
             this.store = store ?? JobStore.Current;
             this.runs = new RunningJobs(runningJobsPersistencePath);
@@ -99,6 +100,7 @@ namespace BlueCollar
             this.heartbeat = heartbeat < 1 ? 10000 : heartbeat;
             this.maximumConcurrency = maximumConcurrency < 1 ? 25 : maximumConcurrency;
             this.retryTimeout = retryTimeout < 1 ? 60000 : retryTimeout;
+            this.isEnabled = enabled;
             this.SetSchedules(schedules);
         }
 
@@ -230,6 +232,29 @@ namespace BlueCollar
                     }
 
                     this.heartbeat = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the runner is currently enabled.
+        /// Allows the runner to remain running while disabling new job dequeueing.
+        /// </summary>
+        public bool IsEnabled
+        {
+            get
+            {
+                lock (this.stateLocker)
+                {
+                    return this.isEnabled;
+                }
+            }
+
+            set
+            {
+                lock (this.stateLocker)
+                {
+                    this.isEnabled = value;
                 }
             }
         }
@@ -859,7 +884,7 @@ namespace BlueCollar
 
                         lock (this.stateLocker)
                         {
-                            if (this.IsRunning)
+                            if (this.IsRunning && this.IsEnabled)
                             {
                                 this.ExecuteScheduledJobs();
                                 this.DequeueJobs();

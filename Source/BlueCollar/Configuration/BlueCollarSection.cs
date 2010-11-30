@@ -8,6 +8,7 @@ namespace BlueCollar.Configuration
 {
     using System;
     using System.Configuration;
+    using System.IO;
 
     /// <summary>
     /// Extends <see cref="ConfigurationSection"/> for Blue Collar configuration settings.
@@ -22,6 +23,16 @@ namespace BlueCollar.Configuration
         public static BlueCollarSection Current
         {
             get { return current; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating dequeueing new jobs by the job runner is enabled.
+        /// </summary>
+        [ConfigurationProperty("enabled", IsRequired = false, DefaultValue = true)]
+        public bool Enabled
+        {
+            get { return (bool)this["enabled"]; }
+            set { this["enabled"] = value; }
         }
 
         /// <summary>
@@ -55,6 +66,22 @@ namespace BlueCollar.Configuration
         {
             get { return (string)this["persistencePath"]; }
             set { this["persistencePath"] = value; }
+        }
+
+        /// <summary>
+        /// Gets the resolved value of <see cref="PersistencePath"/>, relative to the configuration file, if the path is not rooted.
+        /// </summary>
+        public string PersistencePathResolved
+        {
+            get
+            {
+                if (!String.IsNullOrEmpty(this.PersistencePath) && !Path.IsPathRooted(this.PersistencePath))
+                {
+                    return Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), this.PersistencePath);
+                }
+
+                return this.PersistencePath;
+            }
         }
 
         /// <summary>

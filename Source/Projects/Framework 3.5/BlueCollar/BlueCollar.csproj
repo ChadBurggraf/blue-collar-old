@@ -54,6 +54,7 @@
     <Reference Include="System.Runtime.Serialization">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -120,6 +121,9 @@
     </Compile>
     <Compile Include="..\..\..\BlueCollar\JobRunnerProxy.cs">
       <Link>JobRunnerProxy.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\BlueCollar\JobsInProcessModule.cs">
+      <Link>JobsInProcessModule.cs</Link>
     </Compile>
     <Compile Include="..\..\..\BlueCollar\JobStatus.cs">
       <Link>JobStatus.cs</Link>

@@ -31,7 +31,7 @@ namespace BlueCollar
         /// Initializes a new instance of the RunningJobs class.
         /// </summary>
         public RunningJobs()
-            : this(BlueCollarSection.Current.PersistencePath)
+            : this(BlueCollarSection.Current.PersistencePathResolved)
         {
         }
 
@@ -191,6 +191,13 @@ namespace BlueCollar
                 {
                     if (CanWriteToPersisted(this.PersistencePath))
                     {
+                        string directory = Path.GetDirectoryName(this.PersistencePath);
+
+                        if (!String.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                        }
+
                         BinaryFormatter formatter = new BinaryFormatter();
 
                         using (FileStream stream = File.Create(this.PersistencePath))
