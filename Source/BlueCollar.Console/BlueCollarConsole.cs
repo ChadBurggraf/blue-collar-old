@@ -293,6 +293,7 @@ namespace BlueCollar.Console
                 if (bootstraps != null)
                 {
                     bootstraps.Dispose();
+                    bootstraps = null;
                 }
 
                 try
@@ -403,17 +404,31 @@ namespace BlueCollar.Console
         /// </summary>
         private static void TimeoutAndRetryPullUp()
         {
+            if (bootstraps != null)
+            {
+                bootstraps.Dispose();
+                bootstraps = null;
+            }
+
             if (pullUpFailCount < 10)
             {
-                logger.Info("Trying again in 10 seconds.");
+                logger.Info(CultureInfo.InvariantCulture, "Trying again in 10 seconds ({0} of 10).", pullUpFailCount);
                 Thread.Sleep(10000);
                 CreateAndPullUpBootstraps();
             }
             else
             {
                 logger.Fatal("I'm giving up.");
-                inputThread.Abort();
-                exitHandle.Set();
+
+                if (inputThread != null && inputThread.IsAlive)
+                {
+                    inputThread.Abort();
+                }
+
+                if (exitHandle != null)
+                {
+                    exitHandle.Set();
+                }
             }
         }
 

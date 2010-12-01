@@ -250,7 +250,7 @@ namespace BlueCollar.Service
                         exePath = Path.Combine(basePath, "collar_40.exe");
                         break;
                     case FrameworkVersion.ThreeFive:
-                        exePath = Path.Combine(basePath, "collar_35");
+                        exePath = Path.Combine(basePath, "collar_35.exe");
                         break;
                     default:
                         throw new NotImplementedException();
