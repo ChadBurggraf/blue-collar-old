@@ -269,7 +269,7 @@ namespace BlueCollar.Service
                         FileName = exePath,
                         Arguments = String.Format(
                             CultureInfo.InvariantCulture,
-                            @"-d ""{0}"" -c ""{1}"" -l -lf ""{2}"", -p ""{3}""",
+                            @"-d ""{0}"" -c ""{1}"" -l -lf ""{2}"" -p ""{3}""",
                             appElement.Directory,
                             appElement.CfgFile,
                             ResolveLogPath(appElement),
