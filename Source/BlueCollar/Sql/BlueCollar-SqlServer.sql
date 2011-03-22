@@ -6,7 +6,7 @@ CREATE TABLE [BlueCollar]
 	[Id] int NOT NULL IDENTITY(1, 1),
 	[Name] varchar(128) NOT NULL,
 	[JobType] varchar(512) NOT NULL,
-	[Data] xml NOT NULL,
+	[Data] xml NULL,
 	[Status] varchar(24) NOT NULL,
 	[Exception] xml NULL,
 	[QueueDate] datetime NOT NULL,

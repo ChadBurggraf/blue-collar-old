@@ -149,7 +149,7 @@ namespace BlueCollar.Console
             {
                 return 1;
             }
-
+            
             return 0;
         }
 

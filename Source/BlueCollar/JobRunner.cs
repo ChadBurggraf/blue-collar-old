@@ -715,6 +715,7 @@ namespace BlueCollar
                                     this.runs.Add(run);
 
                                     run.Start();
+                                    this.RaiseEvent(this.ExecuteScheduledJob, new JobRecordEventArgs(record));
                                 }
                                 else
                                 {
@@ -724,7 +725,6 @@ namespace BlueCollar
                                 }
 
                                 this.store.SaveJob(record, trans);
-                                this.RaiseEvent(this.ExecuteScheduledJob, new JobRecordEventArgs(record));
                             }
                         }
 

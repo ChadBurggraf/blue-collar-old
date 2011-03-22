@@ -4,7 +4,7 @@ CREATE TABLE "blue_collar"
 	"id" serial NOT NULL,
 	"name" character varying(128) NOT NULL,
 	"job_type" character varying(512) NOT NULL,
-	"data" text NOT NULL,
+	"data" text NULL,
 	"status" character varying(24) NOT NULL,
 	"exception" text NULL,
 	"queue_date" timestamp without time zone NOT NULL,
