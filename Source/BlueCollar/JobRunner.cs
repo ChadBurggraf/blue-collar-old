@@ -926,6 +926,7 @@ namespace BlueCollar
                     var timingOut = from run in runs
                                     join record in records on run.JobId equals record.Id.Value
                                     where run.Job != null
+                                        && run.Job.Timeout > 0
                                         && run.StartDate != null
                                         && DateTime.UtcNow.Subtract(run.StartDate.Value).TotalMilliseconds >= run.Job.Timeout
                                         && record.Status == JobStatus.Started
