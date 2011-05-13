@@ -47,6 +47,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\BlueCollar.Test\ConfigurationTests.cs">
+      <Link>ConfigurationTests.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\BlueCollar.Test\JobRunnerTests.cs">
       <Link>JobRunnerTests.cs</Link>
     </Compile>
@@ -105,6 +108,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BlueCollar.Service\BlueCollar.Service.csproj">
+      <Project>{A321324C-4839-4DE3-BC7B-449E78624C47}</Project>
+      <Name>BlueCollar.Service</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
       <Project>{DAA513BD-1987-4337-A7C0-51793EABA34A}</Project>
       <Name>BlueCollar</Name>

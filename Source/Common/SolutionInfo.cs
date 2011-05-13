@@ -17,8 +17,8 @@ using System.Security;
 [assembly: AssemblyTrademark("")]
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("0.8.3.1")]
-[assembly: AssemblyFileVersion("0.8.3.1")]
+[assembly: AssemblyVersion("0.8.3.2")]
+[assembly: AssemblyFileVersion("0.8.3.2")]
 #if NET40
 [assembly: SecurityRules(SecurityRuleSet.Level1)]
 #endif

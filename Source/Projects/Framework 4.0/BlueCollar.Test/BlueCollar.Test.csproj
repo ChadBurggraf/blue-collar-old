@@ -55,6 +55,10 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BlueCollar.Service\BlueCollar.Service.csproj">
+      <Project>{7FD97831-47ED-477C-8FFA-AB88A06C8AAC}</Project>
+      <Name>BlueCollar.Service</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BlueCollar\BlueCollar.csproj">
       <Project>{138F10FF-16AE-4BB2-A6BC-56CE41F582E2}</Project>
       <Name>BlueCollar</Name>
@@ -62,6 +66,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <Compile Include="..\..\..\BlueCollar.Test\ConfigurationTests.cs">
+      <Link>ConfigurationTests.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\BlueCollar.Test\JobRunnerTests.cs">
       <Link>JobRunnerTests.cs</Link>
     </Compile>
