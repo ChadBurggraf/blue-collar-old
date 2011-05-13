@@ -32,6 +32,7 @@ namespace BlueCollar.Console
         private static string config, directory, persistencePath;
         private static bool autoReload;
         private static int pullUpFailCount;
+        private static long fileSystemWatcherThreshold;
         private static JobRunnerBootstraps bootstraps;
         private static ManualResetEvent exitHandle;
         private static Thread inputThread;
@@ -44,7 +45,7 @@ namespace BlueCollar.Console
         /// <returns>The application exit code.</returns>
         public static int Main(string[] args)
         {
-            string logPath = null;
+            string logPath = null, watcherThreshhold = null;
             int enableLogging = 0, verbose = 0, help = 0;
 
             var options = new OptionSet()
@@ -55,6 +56,7 @@ namespace BlueCollar.Console
                 { "l|log", "write session output to a log file.", v => { ++enableLogging; } },
                 { "lf|logfile=", "the path to the log file to write to.", v => logPath = v },
                 { "p|persistence=", "the path to the running jobs persistence path to create/user.", v => persistencePath = v },
+                { "t|threshold=", "the threshold, in milliseconds, to compress filesystem events into.", v => watcherThreshhold = v },
                 { "h|help", "display usage help.", v => { ++help; } }
             };
 
@@ -132,6 +134,43 @@ namespace BlueCollar.Console
                     persistencePath = Path.GetFullPath(directory.Substring(above.Length + 1) + ".bin");
                     logger.Info(CultureInfo.InvariantCulture, "Using defaulted running jobs persistence file at '{0}'.", persistencePath);
                 }
+            }
+
+            if (!String.IsNullOrEmpty(watcherThreshhold))
+            {
+                string message = null;
+
+                try
+                {
+                    fileSystemWatcherThreshold = Convert.ToInt64(watcherThreshhold, CultureInfo.InvariantCulture);
+
+                    if (fileSystemWatcherThreshold < 500)
+                    {
+                        message = "The filesystem watcher threshold must be at least 500ms.";
+                    }
+                }
+                catch (FormatException)
+                {
+                    message = "The filesystem watcher threshold entered is not a valid number.";
+                }
+
+                if (!String.IsNullOrEmpty(message))
+                {
+                    if (verbose > 0)
+                    {
+                        logger.Fatal(message);
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine(message);
+                    }
+
+                    return 1;
+                }
+            }
+            else
+            {
+                fileSystemWatcherThreshold = 500;
             }
 
             autoReload = true;
@@ -298,7 +337,7 @@ namespace BlueCollar.Console
 
                 try
                 {
-                    bootstraps = new JobRunnerBootstraps(directory, config, persistencePath);
+                    bootstraps = new JobRunnerBootstraps(directory, config, persistencePath, fileSystemWatcherThreshold);
                     bootstraps.AllFinished += new EventHandler(BootstrapsAllFinished);
                     bootstraps.CancelJob += new EventHandler<JobRecordEventArgs>(BootstrapsCancelJob);
                     bootstraps.ChangeDetected += new EventHandler<FileSystemEventArgs>(BootstrapsChangeDetected);

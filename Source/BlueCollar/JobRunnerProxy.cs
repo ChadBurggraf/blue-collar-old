@@ -14,7 +14,6 @@ namespace BlueCollar
     /// across application domains.
     /// </summary>
     [Serializable]
-    //[SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Justification = "False positive.")]
     public sealed class JobRunnerProxy : MarshalByRefObject
     {
         #region Private Fields

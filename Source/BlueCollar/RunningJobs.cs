@@ -42,7 +42,7 @@ namespace BlueCollar
         public RunningJobs(string persistencePath)
         {
             this.PersistencePath = persistencePath;
-            this.runs = new List<JobRun>(LoadFromPersisted());
+            this.runs = new List<JobRun>(this.LoadFromPersisted());
         }
 
         /// <summary>
@@ -72,14 +72,14 @@ namespace BlueCollar
                 {
                     this.persistencePath = value;
 
-                    if (String.IsNullOrEmpty(persistencePath))
+                    if (String.IsNullOrEmpty(this.persistencePath))
                     {
                         this.persistencePath = BlueCollarSection.Current.PersistencePath;
                     }
 
-                    if (!Path.IsPathRooted(persistencePath))
+                    if (!Path.IsPathRooted(this.persistencePath))
                     {
-                        this.persistencePath = Path.GetFullPath(persistencePath);
+                        this.persistencePath = Path.GetFullPath(this.persistencePath);
                     }
                 }
             }

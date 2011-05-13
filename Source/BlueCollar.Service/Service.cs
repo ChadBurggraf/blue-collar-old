@@ -269,11 +269,12 @@ namespace BlueCollar.Service
                         FileName = exePath,
                         Arguments = String.Format(
                             CultureInfo.InvariantCulture,
-                            @"-d ""{0}"" -c ""{1}"" -l -lf ""{2}"" -p ""{3}""",
+                            @"-d ""{0}"" -c ""{1}"" -l -lf ""{2}"" -p ""{3}"" -t {4}",
                             appElement.Directory,
                             appElement.CfgFile,
                             ResolveLogPath(appElement),
-                            ResolvePersistencePath(appElement))
+                            ResolvePersistencePath(appElement),
+                            appElement.FileSystemChangeThreshold)
                     }
                 };
             }

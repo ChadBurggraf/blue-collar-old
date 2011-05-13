@@ -157,13 +157,14 @@ namespace BlueCollar
             }
 
             bool shouldExecute = false;
+            DateTime startOn = element.StartOn.ToUniversalTime();
 
-            if (now >= element.StartOn)
+            if (now >= startOn)
             {
-                double milliseconds = now.Subtract(element.StartOn).TotalMilliseconds;
+                double milliseconds = now.Subtract(startOn).TotalMilliseconds;
                 double repeatMilliseconds = element.RepeatHours * 3600000;
                 int repeats = (int)Math.Floor(milliseconds / repeatMilliseconds);
-                DateTime next = element.StartOn.AddMilliseconds((repeats + 1) * repeatMilliseconds);
+                DateTime next = startOn.AddMilliseconds((repeats + 1) * repeatMilliseconds);
 
                 shouldExecute = next < now.AddMilliseconds(heartbeat);
             }

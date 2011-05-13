@@ -37,6 +37,16 @@ namespace BlueCollar.Service
         }
 
         /// <summary>
+        /// Gets or sets the threshold, in milliseconds, to use when collapsing filesystem change events.
+        /// </summary>
+        [ConfigurationProperty("fileSystemChangeThreshold", IsRequired = false, DefaultValue = 500)]
+        public long FileSystemChangeThreshold
+        {
+            get { return (long)this["fileSystemChangeThreshold"]; }
+            set { this["fileSystemChangeThreshold"] = value; }
+        }
+
+        /// <summary>
         /// Gets or sets the .NET Framework version to run the target application in.
         /// </summary>
         [ConfigurationProperty("frameworkVersion", IsRequired = false, DefaultValue = FrameworkVersion.ThreeFive)]

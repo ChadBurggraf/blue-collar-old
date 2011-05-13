@@ -26,7 +26,7 @@ namespace BlueCollar.Configuration
         }
 
         /// <summary>
-        /// Gets or sets a value indicating dequeueing new jobs by the job runner is enabled.
+        /// Gets or sets a value indicating whether dequeueing new jobs by the job runner is enabled.
         /// </summary>
         [ConfigurationProperty("enabled", IsRequired = false, DefaultValue = true)]
         public bool Enabled

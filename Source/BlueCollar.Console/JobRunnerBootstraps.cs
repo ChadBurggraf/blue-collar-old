@@ -12,6 +12,7 @@ namespace BlueCollar.Console
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Runtime.Remoting;
     using System.Security.Permissions;
     using System.Security.Policy;
 
@@ -73,10 +74,24 @@ namespace BlueCollar.Console
         /// <param name="configurationFilePath">The path to the target application's configuration file.</param>
         /// <param name="runningJobsPersistencePath">The path to the running jobs persistence file to use.</param>
         public JobRunnerBootstraps(string basePath, string configurationFilePath, string runningJobsPersistencePath)
+            : this(basePath, configurationFilePath, runningJobsPersistencePath, 0)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the JobRunnerBootstraps class.
+        /// </summary>
+        /// <param name="basePath">The base path of the target directory containing the Tasty.dll and
+        /// associated job assemblies to bootstrap.</param>
+        /// <param name="configurationFilePath">The path to the target application's configuration file.</param>
+        /// <param name="runningJobsPersistencePath">The path to the running jobs persistence file to use.</param>
+        /// <param name="fileSystemWatcherThreshold">The threshold, in milliseconds, to use whe collapsing filesystem change events.</param>
+        public JobRunnerBootstraps(string basePath, string configurationFilePath, string runningJobsPersistencePath, long fileSystemWatcherThreshold)
         {
             this.BasePath = basePath;
             this.ConfigurationFilePath = configurationFilePath;
             this.RunningJobsPersistencePath = runningJobsPersistencePath;
+            this.FileSystemWatcherThreshold = fileSystemWatcherThreshold < 1 ? 500 : fileSystemWatcherThreshold;
         }
 
         #endregion
@@ -151,6 +166,11 @@ namespace BlueCollar.Console
         public string BasePath { get; set; }
 
         /// <summary>
+        /// Gets or sets the threshold, in milliseconds, to use when collapsing filesystem change events.
+        /// </summary>
+        public long FileSystemWatcherThreshold { get; set; }
+
+        /// <summary>
         /// Gets a value indicating whether the target application has been successfully loaded.
         /// </summary>
         public bool IsLoaded { get; private set; }
@@ -211,12 +231,21 @@ namespace BlueCollar.Console
                     }
 
                     this.watchers.Clear();
+                    bool unload = !unwind;
 
                     if (unwind)
                     {
-                        this.proxy.StopRunner();
+                        try
+                        {
+                            this.proxy.StopRunner();
+                        }
+                        catch (RemotingException)
+                        {
+                            unload = true;
+                        }
                     }
-                    else
+
+                    if (unload)
                     {
                         this.IsLoaded = false;
                         AppDomain.Unload(this.domain);
@@ -243,6 +272,7 @@ namespace BlueCollar.Console
             watcher.Mode = mode;
             watcher.Filter = filter;
             watcher.EnableRaisingEvents = true;
+            watcher.Threshold = this.FileSystemWatcherThreshold;
             return watcher;
         }
 
