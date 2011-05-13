@@ -39,7 +39,7 @@ namespace BlueCollar.Service
         /// <summary>
         /// Gets or sets the threshold, in milliseconds, to use when collapsing filesystem change events.
         /// </summary>
-        [ConfigurationProperty("fileSystemChangeThreshold", IsRequired = false, DefaultValue = 500)]
+        [ConfigurationProperty("fileSystemChangeThreshold", IsRequired = false, DefaultValue = 500L)]
         public long FileSystemChangeThreshold
         {
             get { return (long)this["fileSystemChangeThreshold"]; }
