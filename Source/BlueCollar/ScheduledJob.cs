@@ -163,10 +163,18 @@ namespace BlueCollar
             {
                 double milliseconds = now.Subtract(startOn).TotalMilliseconds;
                 double repeatMilliseconds = element.RepeatHours * 3600000;
-                int repeats = (int)Math.Floor(milliseconds / repeatMilliseconds);
-                DateTime next = startOn.AddMilliseconds((repeats + 1) * repeatMilliseconds);
 
-                shouldExecute = next < now.AddMilliseconds(heartbeat);
+                if (repeatMilliseconds <= heartbeat)
+                {
+                    throw new ConfigurationErrorsException(String.Format(CultureInfo.InvariantCulture, "A job schedule's repeatHours must be greater than the job runner's heartbeat ({0} milliseconds).", heartbeat), element.ElementInformation.Source, element.ElementInformation.LineNumber);
+                }
+                
+                int repeats = (int)Math.Floor(milliseconds / repeatMilliseconds);
+                DateTime executeOn = startOn.AddMilliseconds(((repeats + 1) * repeatMilliseconds) - repeatMilliseconds);
+                DateTime nextHeartbeat = now.AddMilliseconds(heartbeat);
+                DateTime prevHeartbeat = now.AddMilliseconds(-1 * heartbeat);
+
+                shouldExecute = executeOn >= prevHeartbeat && executeOn < nextHeartbeat;
             }
 
             return shouldExecute;
