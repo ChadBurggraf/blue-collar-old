@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+  <UsingTask TaskName="Tasty.Build.GetVersion" AssemblyFile="$(MSBuildProjectDirectory)\Lib\Tasty.dll"/>
   
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>$(MSBuildProjectDirectory)\Source\BlueCollar.snk</AssemblyOriginatorKeyFile>
     <BuildDir>$(MSBuildProjectDirectory)\Build</BuildDir>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <EnableSigning Condition="'$(EnableSigning)' == ''">true</EnableSigning>
+    <LibDir>$(MSBuildProjectDirectory)\Lib</LibDir>
+    <InstallerDir>$(MSBuildProjectDirectory)\Source\Installer</InstallerDir>
     <Net35ProjectsDir>$(MSBuildProjectDirectory)\Source\Projects\Framework 3.5</Net35ProjectsDir>
     <Net40ProjectsDir>$(MSBuildProjectDirectory)\Source\Projects\Framework 4.0</Net40ProjectsDir>
     <SignAssembly>false</SignAssembly>
@@ -77,7 +80,16 @@
     <RemoveDir Directories="$(BuildDir)"/>
   </Target>
 
-  <Target Name="Package" DependsOnTargets="Build">
+  <Target Name="GetVersion">
+    <GetVersion AssemblyInfoFile="$(MSBuildProjectDirectory)\Source\Common\SolutionInfo.cs">
+      <Output TaskParameter="Major" PropertyName="Major"/>
+      <Output TaskParameter="Minor" PropertyName="Minor"/>
+      <Output TaskParameter="Build" PropertyName="Build"/>
+      <Output TaskParameter="Revision" PropertyName="Revision"/>
+    </GetVersion>
+  </Target>
+
+  <Target Name="Package" DependsOnTargets="SetPackageVersion;Build">
     <RemoveDir Directories="$(TempDir)"/>
     <Delete Files="$(BuildDir)\BlueCollar.msi"/>
     
@@ -105,5 +117,14 @@
     <Exec Command='"$(WixDir)\light.exe" -ext WixUIExtension -ext WiXNetFxExtension -out BlueCollar.msi "$(TempDir)\installer.wixobj"' WorkingDirectory="$(TempDir)"/>
     <Copy SourceFiles="$(TempDir)\BlueCollar.msi" DestinationFolder="$(BuildDir)"/>
     <RemoveDir Directories="$(TempDir)"/>
+  </Target>
+
+  <Target Name="SetPackageVersion" DependsOnTargets="GetVersion">
+    <XmlUpdate
+      Prefix="n"
+      Namespace="http://schemas.microsoft.com/wix/2006/wi"
+      XmlFileName="$(InstallerDir)\installer.wxs"
+      XPath="/n:Wix/n:Product/@Version"
+      Value="$(Major).$(Minor).$(Build).$(Revision)"/>
   </Target>
 </Project>

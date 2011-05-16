@@ -1,109 +1,92 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
-  <Product Name="Blue Collar" Id="0870DFD2-A7DF-49EF-8EE1-F13D5B078626" UpgradeCode="AE5FF182-92B9-4CA6-AE1E-52342F775AF7" Version="0.7.0" Manufacturer="Tasty Codes" Language="1033">
-    <Package Description="Blue Collar Installer" Compressed="yes"/>
-
-    <Media Id="1" Cabinet="BlueCollar.cab" EmbedCab="yes"/>
-
-    <PropertyRef Id="NETFRAMEWORK35"/>
-    <PropertyRef Id="NETFRAMEWORK40FULL"/>
-    <WixVariable Id="WixUIBannerBmp" Value="bannrbmp.bmp"/>
-    <WixVariable Id="WixUIDialogBmp" Value="dlgbmp.bmp"/>
-    
-    <Condition Message="Blue Collar requires the .NET Framework v3.5. Please install the .NET Framework v3.5 and then run the installer again">
-      <![CDATA[Installed OR NETFRAMEWORK35]]>
-    </Condition>
-    
+  <Product Name="Blue Collar" Id="0870DFD2-A7DF-49EF-8EE1-F13D5B078626" UpgradeCode="AE5FF182-92B9-4CA6-AE1E-52342F775AF7" Version="0.8.3.3" Manufacturer="Tasty Codes" Language="1033">
+    <Package Description="Blue Collar Installer" Compressed="yes" />
+    <Media Id="1" Cabinet="BlueCollar.cab" EmbedCab="yes" />
+    <PropertyRef Id="NETFRAMEWORK35" />
+    <PropertyRef Id="NETFRAMEWORK40FULL" />
+    <WixVariable Id="WixUIBannerBmp" Value="bannrbmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="dlgbmp.bmp" />
+    <Condition Message="Blue Collar requires the .NET Framework v3.5. Please install the .NET Framework v3.5 and then run the installer again"><![CDATA[Installed OR NETFRAMEWORK35]]></Condition>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder" Name="PFiles">
         <Directory Id="INSTALLDIR" Name="Blue Collar">
-          
           <Component Id="Application" Guid="42CE5D7E-828E-42D8-BF6B-AE83DAF9BCF0">
-            <File Id="collar35EXE" Name="collar_35.exe" DiskId="1" Source="collar_35.exe"/>
-            <File Id="collar35exeCONFIG" Name="collar_35.exe.config" DiskId="1" Source="collar_35.exe.config"/>
-            <File Id="collar40EXE" Name="collar_40.exe" DiskId="1" Source="collar_40.exe"/>
-            <File Id="collar40exeCONFIG" Name="collar_40.exe.config" DiskId="1" Source="collar_40.exe.config"/>
-            <File Id="collarserviceEXE" Name="collar_service.exe" DiskId="1" Source="collar_service.exe" KeyPath="yes"/>
-            <File Id="collarserviceexeCONFIG" Name="collar_service.exe.config" DiskId="1" Source="collar_service.exe.config"/>
-            <File Id="MonoSecurityDLL" Name="Mono.Security.dll" DiskId="1" Source="Mono.Security.dll"/>
-            <File Id="NDeskOptionsDLL" Name="NDesk.Options.dll" DiskId="1" Source="NDesk.Options.dll"/>
-            <File Id="NLogDLL" Name="NLog.dll" DiskId="1" Source="NLog.dll"/>
-            <File Id="NLogXML" Name="NLog.xml" DiskId="1" Source="NLog.xml"/>
-            <File Id="NpgsqlDLL" Name="Npgsql.dll" DiskId="1" Source="Npgsql.dll"/>
-            <File Id="SystemDataSQLiteDLL" Name="System.Data.SQLite.dll" DiskId="1" Source="System.Data.SQLite.dll"/>
-            <File Id="SystemDataSQLiteXML" Name="System.Data.SQLite.xml" DiskId="1" Source="System.Data.SQLite.xml"/>
-            <ServiceInstall Id="ServiceInstaller" Type="ownProcess" Vital="yes" Name="BlueCollarService" DisplayName="Blue Collar Service" Description="Executes Blue Collar job processes." Start="auto" Account="LocalSystem" ErrorControl="normal" Interactive="no"/>
-            <ServiceControl Id="ServiceControl" Start="install" Stop="both" Remove="uninstall" Name="BlueCollarService" Wait="yes"/>
+            <File Id="collar35EXE" Name="collar_35.exe" DiskId="1" Source="collar_35.exe" />
+            <File Id="collar40EXE" Name="collar_40.exe" DiskId="1" Source="collar_40.exe" />
+            <File Id="collarserviceEXE" Name="collar_service.exe" DiskId="1" Source="collar_service.exe" KeyPath="yes" />
+            <File Id="MonoSecurityDLL" Name="Mono.Security.dll" DiskId="1" Source="Mono.Security.dll" />
+            <File Id="NDeskOptionsDLL" Name="NDesk.Options.dll" DiskId="1" Source="NDesk.Options.dll" />
+            <File Id="NLogDLL" Name="NLog.dll" DiskId="1" Source="NLog.dll" />
+            <File Id="NLogXML" Name="NLog.xml" DiskId="1" Source="NLog.xml" />
+            <File Id="NpgsqlDLL" Name="Npgsql.dll" DiskId="1" Source="Npgsql.dll" />
+            <File Id="SystemDataSQLiteDLL" Name="System.Data.SQLite.dll" DiskId="1" Source="System.Data.SQLite.dll" />
+            <File Id="SystemDataSQLiteXML" Name="System.Data.SQLite.xml" DiskId="1" Source="System.Data.SQLite.xml" />
+            <ServiceInstall Id="ServiceInstaller" Type="ownProcess" Vital="yes" Name="BlueCollarService" DisplayName="Blue Collar Service" Description="Executes Blue Collar job processes." Start="auto" Account="LocalSystem" ErrorControl="normal" Interactive="no" />
+            <ServiceControl Id="ServiceControl" Start="install" Stop="both" Remove="uninstall" Name="BlueCollarService" Wait="yes" />
           </Component>
-
+          <Component Id="Configuration" Guid="95919323-DE57-4458-B6F3-8583F14BFD35" Permanent="yes">
+            <File Id="collar35exeCONFIG" Name="collar_35.exe.config" DiskId="1" Source="collar_35.exe.config" />
+            <File Id="collar40exeCONFIG" Name="collar_40.exe.config" DiskId="1" Source="collar_40.exe.config" />
+            <File Id="collarserviceexeCONFIG" Name="collar_service.exe.config" DiskId="1" Source="collar_service.exe.config" KeyPath="yes" />
+          </Component>
           <Directory Id="ReferenceAssemblies" Name="Reference Assemblies">
             <Directory Id="Framework35" Name="Framework 3.5">
               <Component Id="Framework35" Guid="5EE363F7-FDAE-4E32-A1A9-4F84FF84F0C9">
-                <File Id="BlueCollarDLL35" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.dll" KeyPath="yes"/>
-                <File Id="BlueCollarPDB35" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.pdb"/>
-                <File Id="BlueCollarXML35" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.xml"/>
+                <File Id="BlueCollarDLL35" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.dll" KeyPath="yes" />
+                <File Id="BlueCollarPDB35" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.pdb" />
+                <File Id="BlueCollarXML35" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.xml" />
               </Component>
-              
               <Directory Id="GAC35" Name="GAC">
                 <Component Id="GAC35" Guid="3DE2B7D7-E0A4-4ADA-9A04-47C90B70D2FE">
-                  <File Id="BlueCollarDLL35GAC" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.dll" Assembly=".net" KeyPath="yes"/>
+                  <File Id="BlueCollarDLL35GAC" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 3.5\BlueCollar.dll" Assembly=".net" KeyPath="yes" />
                 </Component>
               </Directory>
-
               <Component Id="Framework35AssemblyFolder" Guid="D3B0873F-F8E9-4682-B4F5-C5FE3486B004">
                 <RegistryKey Root="HKLM" Key="Software\Microsoft\.NETFramework\AssemblyFolders\Blue Collar .NET 3.5" Action="createAndRemoveOnUninstall">
-                  <RegistryValue Type="string" Value="[$Framework35AssemblyFolder]"/>
+                  <RegistryValue Type="string" Value="[$Framework35AssemblyFolder]" />
                 </RegistryKey>
               </Component>
             </Directory>
-            
             <Directory Id="Framework40" Name="Framework 4.0">
               <Component Id="Framework40" Guid="C72CE44D-A0B9-4A8B-A821-102587B94CA3">
-                <File Id="BlueCollarDLL40" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" KeyPath="yes"/>
-                <File Id="BlueCollarPDB40" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.pdb"/>
-                <File Id="BlueCollarXML40" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.xml"/>
+                <File Id="BlueCollarDLL40" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" KeyPath="yes" />
+                <File Id="BlueCollarPDB40" Name="BlueCollar.pdb" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.pdb" />
+                <File Id="BlueCollarXML40" Name="BlueCollar.xml" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.xml" />
               </Component>
-              
               <Directory Id="GAC40" Name="GAC">
                 <Component Id="GAC40" Guid="F5412658-B7A2-4026-B910-6B900B832897">
-                  <Condition>
-                    <![CDATA[Installed OR NETFRAMEWORK40FULL]]>
-                  </Condition>
-                  <File Id="BlueCollarDLL40GAC" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" Assembly=".net" KeyPath="yes"/>
+                  <Condition><![CDATA[Installed OR NETFRAMEWORK40FULL]]></Condition>
+                  <File Id="BlueCollarDLL40GAC" Name="BlueCollar.dll" DiskId="1" Source="Reference Assemblies\Framework 4.0\BlueCollar.dll" Assembly=".net" KeyPath="yes" />
                 </Component>
               </Directory>
-
               <Component Id="Framework40AssemblyFolder" Guid="9F08EFCA-41F4-4C80-99E7-AFBACCB3CA5C">
-                <Condition>
-                  <![CDATA[Installed OR NETFRAMEWORK40FULL]]>
-                </Condition>
+                <Condition><![CDATA[Installed OR NETFRAMEWORK40FULL]]></Condition>
                 <RegistryKey Root="HKLM" Key="Software\Microsoft\.NETFramework\AssemblyFolders\Blue Collar .NET 4.0" Action="createAndRemoveOnUninstall">
-                  <RegistryValue Type="string" Value="[$Framework40AssemblyFolder]"/>
+                  <RegistryValue Type="string" Value="[$Framework40AssemblyFolder]" />
                 </RegistryKey>
               </Component>
             </Directory>
           </Directory>
-          
           <Component Id="Source" Guid="6880F6B9-FA8C-4C0E-B8E0-F5D386815BE4">
-            <File Id="BlueCollarSrcZIP" Name="BlueCollar-Src.zip" DiskId="1" Source="BlueCollar-Src.zip" KeyPath="yes"/>
+            <File Id="BlueCollarSrcZIP" Name="BlueCollar-Src.zip" DiskId="1" Source="BlueCollar-Src.zip" KeyPath="yes" />
           </Component>
         </Directory>
       </Directory>
     </Directory>
-
     <Feature Id="Complete" Title="Blue Collar" Level="1" Description="Blue Collar runtime assemblies and source code." Display="expand" ConfigurableDirectory="INSTALLDIR">
-      <ComponentRef Id="Application"/>
-      <ComponentRef Id="Framework35"/>
-      <ComponentRef Id="GAC35"/>
-      <ComponentRef Id="Framework35AssemblyFolder"/>
-      <ComponentRef Id="Framework40"/>
-      <ComponentRef Id="GAC40"/>
-      <ComponentRef Id="Framework40AssemblyFolder"/>
-      <ComponentRef Id="Source"/>
+      <ComponentRef Id="Application" />
+      <ComponentRef Id="Configuration" />
+      <ComponentRef Id="Framework35" />
+      <ComponentRef Id="GAC35" />
+      <ComponentRef Id="Framework35AssemblyFolder" />
+      <ComponentRef Id="Framework40" />
+      <ComponentRef Id="GAC40" />
+      <ComponentRef Id="Framework40AssemblyFolder" />
+      <ComponentRef Id="Source" />
     </Feature>
-
     <UI>
-      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR"/>
+      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
       <UIRef Id="WixUI_InstallDir" />
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2">1</Publish>
       <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">1</Publish>
