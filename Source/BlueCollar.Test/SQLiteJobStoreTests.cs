@@ -43,24 +43,6 @@ namespace BlueCollar.Test
         }
 
         /// <summary>
-        /// Get latest scheduled jobs tests.
-        /// </summary>
-        [TestMethod]
-        public void SQLiteJobStoreGetLatestScheduledJobs()
-        {
-            ExecuteGetLatestScheduledJobs();
-        }
-
-        /// <summary>
-        /// Save jobs tests.
-        /// </summary>
-        [TestMethod]
-        public void SQLiteJobStoreSaveJobs()
-        {
-            ExecuteSaveJobs();
-        }
-
-        /// <summary>
         /// Creates a new <see cref="IJobStore"/> instance for use with this test class.
         /// </summary>
         /// <returns>A <see cref="IJobStore"/> instance.</returns>

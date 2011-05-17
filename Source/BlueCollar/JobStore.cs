@@ -238,26 +238,6 @@ namespace BlueCollar
         public abstract IEnumerable<JobRecord> GetJobs(string likeName, JobStatus? withStatus, string inSchedule, JobRecordResultsOrderBy orderBy, bool sortDescending, int pageNumber, int pageSize, IJobStoreTransaction transaction);
 
         /// <summary>
-        /// Gets a collection of the most recently scheduled persisted job for each
-        /// scheduled job in the given collection.
-        /// </summary>
-        /// <param name="scheduleNames">A collection of schedule names to get the latest persisted jobs for.</param>
-        /// <returns>A collection of recently scheduled jobs.</returns>
-        public virtual IEnumerable<JobRecord> GetLatestScheduledJobs(IEnumerable<string> scheduleNames)
-        {
-            return this.GetLatestScheduledJobs(scheduleNames, null);
-        }
-
-        /// <summary>
-        /// Gets a collection of the most recently scheduled persisted job for each
-        /// scheduled job in the given collection.
-        /// </summary>
-        /// <param name="scheduleNames">A collection of schedule names to get the latest persisted jobs for.</param>
-        /// <param name="transaction">The transaction to execute the command in.</param>
-        /// <returns>A collection of recently scheduled jobs.</returns>
-        public abstract IEnumerable<JobRecord> GetLatestScheduledJobs(IEnumerable<string> scheduleNames, IJobStoreTransaction transaction);
-
-        /// <summary>
         /// Initializes the job store from the given configuration element.
         /// </summary>
         /// <param name="element">The configuration element to initialize the job store from.</param>

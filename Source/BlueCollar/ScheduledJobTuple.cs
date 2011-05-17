@@ -20,19 +20,17 @@ namespace BlueCollar
         /// Initializes a new instance of the ScheduledJobTuple class.
         /// </summary>
         public ScheduledJobTuple()
-            : this(null, null, null, null)
+            : this(null, null, null)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the ScheduledJobTuple class from the given instance.
-        /// Does not copy over the <see cref="ScheduledJobTuple.Record"/> property.
         /// </summary>
         /// <param name="tuple">The tuple instance to create this instance from.</param>
-        /// <param name="record">The new tuple's <see cref="JobRecord"/>.</param>
         /// <param name="now">The current date, used to calculate whether the tuple should be executed.</param>
         /// <param name="heartbeat">The heartbeat window of the job runner, used to calculate whether the tuple should be executed.</param>
-        public ScheduledJobTuple(ScheduledJobTuple tuple, JobRecord record, DateTime? now, long? heartbeat)
+        public ScheduledJobTuple(ScheduledJobTuple tuple, DateTime? now, long? heartbeat)
         {
             if (tuple != null)
             {
@@ -51,27 +49,17 @@ namespace BlueCollar
                         throw new ArgumentException("heartbeat must be greater than 0.", "heartbeat");
                     }
 
-                    this.ShouldExecute = BlueCollar.ScheduledJob.ShouldExecute(tuple.Schedule, heartbeat.Value, now.Value);
+                    DateTime? executeOn;
+                    this.ShouldExecute = BlueCollar.ScheduledJob.ShouldExecute(tuple.Schedule, heartbeat.Value, now.Value, out executeOn);
+                    this.ExecuteOn = executeOn;
                 }
-            }
-
-            this.Record = record;
-
-            if (record != null)
-            {
-                this.LastExecuteDate = record.QueueDate;
             }
         }
 
         /// <summary>
-        /// Gets or sets the scheduled job's last execute date.
+        /// Gets the scheduled job's concrete execution date, if applicable.
         /// </summary>
-        public DateTime LastExecuteDate { get; set; }
-
-        /// <summary>
-        /// Gets or sets scheduled job's previous run record.
-        /// </summary>
-        public JobRecord Record { get; set; }
+        public DateTime? ExecuteOn { get; set; }
 
         /// <summary>
         /// Gets or sets the scheduled job's owner schedule.
@@ -93,34 +81,20 @@ namespace BlueCollar
         /// tuples and latest scheduled job runs.
         /// </summary>
         /// <param name="allScheduledJobs">The projection of all available scheduled job tuples.</param>
-        /// <param name="latestScheduledJobs">A collection of the latest job run for each schedule and job type.</param>
         /// <param name="now">The current date.</param>
         /// <param name="heartbeat">The job runner heartbeat, in milliseconds.</param>
         /// <param name="count">The maximum number of tuples to get.</param>
         /// <returns>A collection of executable scheduled job tuples.</returns>
-        public static IEnumerable<ScheduledJobTuple> GetExecutableTuples(IEnumerable<ScheduledJobTuple> allScheduledJobs, IEnumerable<JobRecord> latestScheduledJobs, DateTime now, long heartbeat, int count)
+        public static IEnumerable<ScheduledJobTuple> GetExecutableTuples(IEnumerable<ScheduledJobTuple> allScheduledJobs, DateTime now, long heartbeat, int count)
         {
             if (allScheduledJobs == null)
             {
                 throw new ArgumentNullException("allScheduledJobs", "allScheduledJobs cannot be null.");
             }
 
-            if (latestScheduledJobs == null)
-            {
-                throw new ArgumentNullException("latestScheduledJobs", "latestScheduledJobs cannot be null.");
-            }
-
-            return (from t in
-                        (from sj in allScheduledJobs
-                         from r in
-                             (from r in latestScheduledJobs
-                              where !String.IsNullOrEmpty(r.JobType) &&
-                                    sj.Schedule.Name.Equals(r.ScheduleName, StringComparison.OrdinalIgnoreCase) &&
-                                    r.JobType.StartsWith(sj.ScheduledJob.JobType, StringComparison.OrdinalIgnoreCase)
-                              select r).DefaultIfEmpty()
-                         select new ScheduledJobTuple(sj, r, now, heartbeat))
-                    where t.ShouldExecute && t.LastExecuteDate < now.AddMilliseconds(-1 * heartbeat)
-                    orderby t.LastExecuteDate
+            return (from t in allScheduledJobs.Select(sj => new ScheduledJobTuple(sj, now, heartbeat))
+                    where t.ShouldExecute
+                    orderby t.ExecuteOn
                     select t).Take(count);
         }
     }

@@ -674,8 +674,8 @@ namespace BlueCollar
                 this.lastScheduleCheck = now;
 
                 var scheduleNames = this.Schedules.Select(s => s.Name);
-                var records = this.store.GetLatestScheduledJobs(scheduleNames);
-                var tuples = ScheduledJobTuple.GetExecutableTuples(this.ScheduledJobs, records, now, heartbeat, count);
+                //var records = this.store.GetLatestScheduledJobs(scheduleNames);
+                var tuples = ScheduledJobTuple.GetExecutableTuples(this.ScheduledJobs, now, heartbeat, count);
 
                 using (IJobStoreTransaction trans = this.store.BeginTransaction())
                 {
@@ -684,6 +684,7 @@ namespace BlueCollar
                         foreach (ScheduledJobTuple tuple in tuples)
                         {
                             JobRecord record = ScheduledJob.CreateRecord(tuple.Schedule, tuple.ScheduledJob, now);
+
                             bool running = this.runs.GetAll().Any(
                                 r => tuple.Schedule.Name.Equals(r.ScheduleName, StringComparison.OrdinalIgnoreCase) &&
                                      tuple.ScheduledJob.JobType.StartsWith(record.JobType, StringComparison.OrdinalIgnoreCase));

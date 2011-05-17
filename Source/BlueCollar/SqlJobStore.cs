@@ -462,54 +462,6 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Gets a collection of the most recently scheduled persisted job for each
-        /// scheduled job in the given collection.
-        /// </summary>
-        /// <param name="scheduleNames">A collection of schedule names to get the latest persisted jobs for.</param>
-        /// <param name="transaction">The transaction to execute the command in.</param>
-        /// <returns>A collection of recently scheduled jobs.</returns>
-        public override IEnumerable<JobRecord> GetLatestScheduledJobs(IEnumerable<string> scheduleNames, IJobStoreTransaction transaction)
-        {
-            SqlJobStoreTransaction trans = transaction as SqlJobStoreTransaction;
-            DbConnection connection = null;
-            DbCommand command = null;
-            List<JobRecord> records = new List<JobRecord>();
-
-            try
-            {
-                if (trans != null)
-                {
-                    command = this.CreateLatestScheduledJobsSelectCommand(trans.Connection, scheduleNames);
-                    command.Transaction = trans.Transaction;
-                }
-                else
-                {
-                    connection = this.CreateAndOpenConnection();
-                    command = this.CreateLatestScheduledJobsSelectCommand(connection, scheduleNames);
-                }
-
-                using (DbDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        records.Add(this.CreateRecord(reader));
-                    }
-                }
-            }
-            finally
-            {
-                if (command != null)
-                {
-                    command.Dispose();
-                }
-
-                this.DisposeConnection(connection);
-            }
-
-            return records;
-        }
-
-        /// <summary>
         /// Saves the given job record, either creating it or updating it.
         /// </summary>
         /// <param name="record">The job to save.</param>
@@ -654,58 +606,6 @@ namespace BlueCollar
                 this.ParameterName("Id"));
 
             command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Id"), id));
-            return command;
-        }
-
-        /// <summary>
-        /// Creates a select command that can be used to fetch a collection of each scheduled job's latest record.
-        /// </summary>
-        /// <param name="connection">The connection to create the command with.</param>
-        /// <param name="scheduleNames">A collection of schedule names to get the latest persisted jobs for.</param>
-        /// <returns>A select command.</returns>
-        protected virtual DbCommand CreateLatestScheduledJobsSelectCommand(DbConnection connection, IEnumerable<string> scheduleNames)
-        {
-            const string SqlStart = "SELECT * FROM (SELECT *, (SELECT COUNT({0}) FROM {1} t2 WHERE t2.{2} = t1.{2} AND t2.{3} = t1.{3} AND t2.{4} > t1.{4}) AS {5} FROM {1} t1 WHERE {3} IN (";
-            const string SqlEnd = @")) t WHERE {0} = 0;";
-
-            DbCommand command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            
-            StringBuilder sb = new StringBuilder();
-            sb.AppendFormat(
-                CultureInfo.InvariantCulture,
-                SqlStart,
-                this.ColumnName("Id"),
-                this.TableName,
-                this.ColumnName("JobType"),
-                this.ColumnName("ScheduleName"),
-                this.ColumnName("QueueDate"),
-                this.ColumnName("Rank"));
-
-            if (scheduleNames != null && scheduleNames.Count() > 0)
-            {
-                int i = 0;
-
-                foreach (string scheduleName in scheduleNames)
-                {
-                    if (i > 0)
-                    {
-                        sb.Append(",");
-                    }
-
-                    string paramName = this.ParameterName("SN" + i++);
-                    sb.Append(paramName);
-                    command.Parameters.Add(this.ParameterWithValue(paramName, scheduleName));
-                }
-            }
-            else
-            {
-                sb.Append("NULL");
-            }
-
-            sb.AppendFormat(CultureInfo.InvariantCulture, SqlEnd, this.ColumnName("Rank"));
-            command.CommandText = sb.ToString();
-
             return command;
         }
 

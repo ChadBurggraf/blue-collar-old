@@ -43,15 +43,6 @@ namespace BlueCollar.Test
         }
 
         /// <summary>
-        /// Get latest scheduled jobs tests.
-        /// </summary>
-        [TestMethod]
-        public void MemoryJobStoreGetLatestScheduledJobs()
-        {
-            ExecuteGetLatestScheduledJobs();
-        }
-
-        /// <summary>
         /// Save jobs tests.
         /// </summary>
         [TestMethod]

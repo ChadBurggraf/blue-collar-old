@@ -141,6 +141,21 @@ namespace BlueCollar
         /// <returns>True if the schedule should be executed now, false otherwise.</returns>
         public static bool ShouldExecute(JobScheduleElement element, long heartbeat, DateTime now)
         {
+            DateTime? executeOn;
+            return ShouldExecute(element, heartbeat, now, out executeOn);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the schedule identified by the given element is ready for execution
+        /// given the provided heartbeat window and current date.
+        /// </summary>
+        /// <param name="element">The element to check.</param>
+        /// <param name="heartbeat">The heartbeat window, in milliseconds.</param>
+        /// <param name="now">The current date, in UTC.</param>
+        /// <param name="executeOn">The concrete execution date, if the job should be executed.</param>
+        /// <returns>True if the schedule should be executed now, false otherwise.</returns>
+        public static bool ShouldExecute(JobScheduleElement element, long heartbeat, DateTime now, out DateTime? executeOn)
+        {
             if (element == null)
             {
                 throw new ArgumentNullException("element", "element cannot be null");
@@ -156,6 +171,7 @@ namespace BlueCollar
                 throw new ArgumentException("now must be in UTC.", "now");
             }
 
+            executeOn = null;
             bool shouldExecute = false;
             DateTime startOn = element.StartOn.ToUniversalTime();
 
@@ -170,7 +186,7 @@ namespace BlueCollar
                 }
                 
                 int repeats = (int)Math.Floor(milliseconds / repeatMilliseconds);
-                DateTime executeOn = startOn.AddMilliseconds(((repeats + 1) * repeatMilliseconds) - repeatMilliseconds);
+                executeOn = startOn.AddMilliseconds(((repeats + 1) * repeatMilliseconds) - repeatMilliseconds);
                 DateTime nextHeartbeat = now.AddMilliseconds(heartbeat);
                 DateTime prevHeartbeat = now.AddMilliseconds(-1 * heartbeat);
 
