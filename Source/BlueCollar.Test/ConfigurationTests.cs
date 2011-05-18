@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------
-// <copyright file="JobRunnerTests.cs" company="Tasty Codes">
+// <copyright file="ConfigurationTests.cs" company="Tasty Codes">
 //     Copyright (c) 2011 Chad Burggraf.
 // </copyright>
 //-----------------------------------------------------------------------

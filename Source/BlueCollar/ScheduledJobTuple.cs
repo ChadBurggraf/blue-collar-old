@@ -57,7 +57,7 @@ namespace BlueCollar
         }
 
         /// <summary>
-        /// Gets the scheduled job's concrete execution date, if applicable.
+        /// Gets or sets the scheduled job's concrete execution date, if applicable.
         /// </summary>
         public DateTime? ExecuteOn { get; set; }
 

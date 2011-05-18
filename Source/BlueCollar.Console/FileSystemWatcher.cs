@@ -13,6 +13,7 @@ namespace BlueCollar.Console
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Security.Permissions;
+    using System.Threading;
 
     /// <summary>
     /// Wraps a <see cref="System.IO.FileSystemWatcher"/> object to filter and raise
@@ -24,9 +25,11 @@ namespace BlueCollar.Console
     {
         #region Private Fields
 
+        private static readonly object dequeueLocker = new object();
         private System.IO.FileSystemWatcher innerWatcher;
         private Dictionary<string, PathEventItem> pathEvents;
-        private long? threshold;
+        private Thread dequeueThread;
+        private int? threshold;
         private bool disposed;
 
         #endregion
@@ -112,8 +115,36 @@ namespace BlueCollar.Console
         /// </summary>
         public bool EnableRaisingEvents
         {
-            get { return this.innerWatcher.EnableRaisingEvents; }
-            set { this.innerWatcher.EnableRaisingEvents = value; }
+            get 
+            { 
+                return this.innerWatcher.EnableRaisingEvents; 
+            }
+            
+            set 
+            {
+                lock (this.pathEvents)
+                {
+                    this.innerWatcher.EnableRaisingEvents = value;
+
+                    if (!value)
+                    {
+                        this.pathEvents.Clear();
+                    }
+                    else
+                    {
+                        lock (dequeueLocker)
+                        {
+                            if (this.dequeueThread != null)
+                            {
+                                this.dequeueThread.Abort();
+                            }
+
+                            this.dequeueThread = new Thread(new ThreadStart(this.DequeueEvents));
+                            this.dequeueThread.Start();
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -172,7 +203,7 @@ namespace BlueCollar.Console
         /// Defaults to 500ms, so all changes happening with 500ms of each other count
         /// as a single event.
         /// </summary>
-        public long Threshold
+        public int Threshold
         {
             get 
             {
@@ -186,7 +217,23 @@ namespace BlueCollar.Console
 
             set
             {
-                this.threshold = value;
+                if (value < 0)
+                {
+                    throw new ArgumentException("value must be greater than or equal to zero.", "value");
+                }
+
+                lock (dequeueLocker)
+                {
+                    this.threshold = value;
+
+                    if (this.dequeueThread != null)
+                    {
+                        this.dequeueThread.Abort();
+                    }
+
+                    this.dequeueThread = new Thread(new ThreadStart(this.DequeueEvents));
+                    this.dequeueThread.Start();
+                }
             }
         }
 
@@ -208,6 +255,39 @@ namespace BlueCollar.Console
         #region Private Instance Methods
 
         /// <summary>
+        /// Dequeues all of the events that have elapsed the current <see cref="Threshold"/>.
+        /// </summary>
+        private void DequeueEvents()
+        {
+            while (this.EnableRaisingEvents)
+            {
+                lock (dequeueLocker)
+                {
+                    lock (this.pathEvents)
+                    {
+                        List<string> keysToRemove = new List<string>();
+
+                        foreach (KeyValuePair<string, PathEventItem> pair in this.pathEvents)
+                        {
+                            if (DateTime.Now.Subtract(pair.Value.LastRaised).TotalMilliseconds > this.Threshold)
+                            {
+                                keysToRemove.Add(pair.Key);
+                                this.RaiseEvent(pair.Value);
+                            }
+                        }
+
+                        foreach (string key in keysToRemove)
+                        {
+                            this.pathEvents.Remove(key);
+                        }
+                    }
+                }
+
+                Thread.Sleep(this.Threshold);
+            }
+        }
+
+        /// <summary>
         /// Releases all resources used by this instance.
         /// </summary>
         /// <param name="disposing">A value indicating whether explicitly disposing.</param>
@@ -215,10 +295,19 @@ namespace BlueCollar.Console
         {
             if (!this.disposed)
             {
-                if (disposing && this.innerWatcher != null)
+                if (disposing)
                 {
-                    this.innerWatcher.Dispose();
-                    this.innerWatcher = null;
+                    if (this.innerWatcher != null)
+                    {
+                        this.innerWatcher.Dispose();
+                        this.innerWatcher = null;
+                    }
+
+                    if (this.dequeueThread != null)
+                    {
+                        this.dequeueThread.Abort();
+                        this.dequeueThread = null;
+                    }
                 }
 
                 this.disposed = true;
@@ -244,14 +333,8 @@ namespace BlueCollar.Console
                 }
 
                 PathEventItem item = this.pathEvents[key];
-
-                if (item.RaisedCount == 0 || now.Subtract(item.LastRaised).TotalMilliseconds > this.Threshold)
-                {
-                    item.PublishEventArgs = e;
-                    item.PublishEventType = eventType;
-                    this.RaiseEvent(item);
-                }
-
+                item.PublishEventArgs = e;
+                item.PublishEventType = eventType;
                 item.LastRaised = now;
                 item.RaisedCount++;
             }
@@ -271,6 +354,9 @@ namespace BlueCollar.Console
 
             this.pathEvents = new Dictionary<string, PathEventItem>();
             this.Mode = FileSystemWatcherMode.IndividualFiles;
+
+            this.dequeueThread = new Thread(new ThreadStart(this.DequeueEvents));
+            this.dequeueThread.Start();
         }
 
         /// <summary>

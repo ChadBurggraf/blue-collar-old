@@ -37,6 +37,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.Runtime.Serialization">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -49,6 +50,9 @@
   <ItemGroup>
     <Compile Include="..\..\..\BlueCollar.Test\ConfigurationTests.cs">
       <Link>ConfigurationTests.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\BlueCollar.Test\FileSystemWatcherTests.cs">
+      <Link>FileSystemWatcherTests.cs</Link>
     </Compile>
     <Compile Include="..\..\..\BlueCollar.Test\JobRunnerTests.cs">
       <Link>JobRunnerTests.cs</Link>
@@ -111,6 +115,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BlueCollar.Console\BlueCollar.Console.csproj">
+      <Project>{C0F2FD2A-8314-41A6-8181-2F7ED654784A}</Project>
+      <Name>BlueCollar.Console</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BlueCollar.Service\BlueCollar.Service.csproj">
       <Project>{A321324C-4839-4DE3-BC7B-449E78624C47}</Project>
       <Name>BlueCollar.Service</Name>

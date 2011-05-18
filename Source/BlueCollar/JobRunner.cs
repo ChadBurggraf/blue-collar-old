@@ -674,7 +674,6 @@ namespace BlueCollar
                 this.lastScheduleCheck = now;
 
                 var scheduleNames = this.Schedules.Select(s => s.Name);
-                //var records = this.store.GetLatestScheduledJobs(scheduleNames);
                 var tuples = ScheduledJobTuple.GetExecutableTuples(this.ScheduledJobs, now, heartbeat, count);
 
                 using (IJobStoreTransaction trans = this.store.BeginTransaction())

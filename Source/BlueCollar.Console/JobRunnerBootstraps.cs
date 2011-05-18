@@ -86,7 +86,7 @@ namespace BlueCollar.Console
         /// <param name="configurationFilePath">The path to the target application's configuration file.</param>
         /// <param name="runningJobsPersistencePath">The path to the running jobs persistence file to use.</param>
         /// <param name="fileSystemWatcherThreshold">The threshold, in milliseconds, to use whe collapsing filesystem change events.</param>
-        public JobRunnerBootstraps(string basePath, string configurationFilePath, string runningJobsPersistencePath, long fileSystemWatcherThreshold)
+        public JobRunnerBootstraps(string basePath, string configurationFilePath, string runningJobsPersistencePath, int fileSystemWatcherThreshold)
         {
             this.BasePath = basePath;
             this.ConfigurationFilePath = configurationFilePath;
@@ -168,7 +168,7 @@ namespace BlueCollar.Console
         /// <summary>
         /// Gets or sets the threshold, in milliseconds, to use when collapsing filesystem change events.
         /// </summary>
-        public long FileSystemWatcherThreshold { get; set; }
+        public int FileSystemWatcherThreshold { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the target application has been successfully loaded.
@@ -231,21 +231,12 @@ namespace BlueCollar.Console
                     }
 
                     this.watchers.Clear();
-                    bool unload = !unwind;
 
                     if (unwind)
                     {
-                        try
-                        {
-                            this.proxy.StopRunner();
-                        }
-                        catch (RemotingException)
-                        {
-                            unload = true;
-                        }
+                        this.proxy.StopRunner();
                     }
-
-                    if (unload)
+                    else
                     {
                         this.IsLoaded = false;
                         AppDomain.Unload(this.domain);

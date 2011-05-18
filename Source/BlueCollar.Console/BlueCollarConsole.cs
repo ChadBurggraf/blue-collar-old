@@ -31,8 +31,7 @@ namespace BlueCollar.Console
         private static object bootstrapsLocker = new object();
         private static string config, directory, persistencePath;
         private static bool autoReload;
-        private static int pullUpFailCount;
-        private static long fileSystemWatcherThreshold;
+        private static int pullUpFailCount, fileSystemWatcherThreshold;
         private static JobRunnerBootstraps bootstraps;
         private static ManualResetEvent exitHandle;
         private static Thread inputThread;
@@ -142,7 +141,7 @@ namespace BlueCollar.Console
 
                 try
                 {
-                    fileSystemWatcherThreshold = Convert.ToInt64(watcherThreshhold, CultureInfo.InvariantCulture);
+                    fileSystemWatcherThreshold = Convert.ToInt32(watcherThreshhold, CultureInfo.InvariantCulture);
 
                     if (fileSystemWatcherThreshold < 500)
                     {
