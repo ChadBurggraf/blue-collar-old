@@ -122,26 +122,26 @@ namespace BlueCollar.Console
             
             set 
             {
-                lock (this.pathEvents)
+                lock (dequeueLocker)
                 {
                     this.innerWatcher.EnableRaisingEvents = value;
 
                     if (!value)
                     {
-                        this.pathEvents.Clear();
+                        lock (this.pathEvents)
+                        {
+                            this.pathEvents.Clear();
+                        }
                     }
                     else
                     {
-                        lock (dequeueLocker)
+                        if (this.dequeueThread != null)
                         {
-                            if (this.dequeueThread != null)
-                            {
-                                this.dequeueThread.Abort();
-                            }
-
-                            this.dequeueThread = new Thread(new ThreadStart(this.DequeueEvents));
-                            this.dequeueThread.Start();
+                            this.dequeueThread.Abort();
                         }
+
+                        this.dequeueThread = new Thread(new ThreadStart(this.DequeueEvents));
+                        this.dequeueThread.Start();
                     }
                 }
             }
