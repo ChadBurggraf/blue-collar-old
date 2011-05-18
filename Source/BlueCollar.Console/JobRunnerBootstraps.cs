@@ -234,7 +234,16 @@ namespace BlueCollar.Console
 
                     if (unwind)
                     {
-                        this.proxy.StopRunner();
+                        try
+                        {
+                            Limit.Invoke(this.proxy.StopRunner, 60000);
+                        }
+                        catch (TimeoutException)
+                        {
+                            this.IsLoaded = false;
+                            AppDomain.Unload(this.domain);
+                            this.RaiseEvent(this.AllFinished, EventArgs.Empty);
+                        }
                     }
                     else
                     {

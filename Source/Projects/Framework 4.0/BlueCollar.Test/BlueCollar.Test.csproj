@@ -85,6 +85,9 @@
     <Compile Include="..\..\..\BlueCollar.Test\JobTests.cs">
       <Link>JobTests.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\BlueCollar.Test\LimitTests.cs">
+      <Link>LimitTests.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\BlueCollar.Test\MemoryJobStoreTests.cs">
       <Link>MemoryJobStoreTests.cs</Link>
     </Compile>

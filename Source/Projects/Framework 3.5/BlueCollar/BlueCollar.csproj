@@ -131,6 +131,9 @@
     <Compile Include="..\..\..\BlueCollar\JobStore.cs">
       <Link>JobStore.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\BlueCollar\Limit.cs">
+      <Link>Limit.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\BlueCollar\MemoryJobStore.cs">
       <Link>MemoryJobStore.cs</Link>
     </Compile>
