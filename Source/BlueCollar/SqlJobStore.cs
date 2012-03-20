@@ -87,17 +87,41 @@ namespace BlueCollar
         /// <returns>The resolved path.</returns>
         public static string ResolveDatabaseFilePath(string path)
         {
-            const string DataDirectoryDirective = "|DataDirectory|";
+            const string DataDirectory = "|DataDirectory|";
+            path = (path ?? string.Empty).Trim();
 
-            if (!String.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(path))
             {
-                if (path.StartsWith(DataDirectoryDirective, StringComparison.OrdinalIgnoreCase))
-                {
-                    path = Regex.Replace(path.Substring(DataDirectoryDirective.Length), "@\\|/", Path.DirectorySeparatorChar.ToString());
-                    path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.Combine("App_Data", path));
-                }
+                int dataDirectoryIndex = path.IndexOf(DataDirectory, StringComparison.OrdinalIgnoreCase);
 
-                path = Path.GetFullPath(path);
+                if (dataDirectoryIndex > -1)
+                {
+                    path = path.Substring(dataDirectoryIndex + DataDirectory.Length);
+                    path = Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data"), path);
+                }
+                else
+                {
+                    Regex exp = new Regex(string.Concat("[", Regex.Escape(new string(Path.GetInvalidPathChars())), "]"));
+
+                    if (!exp.IsMatch(path) && !Path.IsPathRooted(path))
+                    {
+                        string dir = BlueCollarSection.Current.ElementInformation.Source;
+                        dir = !string.IsNullOrEmpty(dir) ? Path.GetDirectoryName(dir) : null;
+
+                        if (!string.IsNullOrEmpty(dir))
+                        {
+                            path = Path.Combine(dir, path);
+                        }
+                        else
+                        {
+                            path = Path.GetFullPath(path);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                path = AppDomain.CurrentDomain.BaseDirectory;
             }
 
             return path;
@@ -175,6 +199,43 @@ namespace BlueCollar
                 {
                     connection = this.CreateAndOpenConnection();
                     command = this.CreateDeleteCommand(connection, id);
+                }
+
+                command.ExecuteNonQuery();
+            }
+            finally
+            {
+                if (command != null)
+                {
+                    command.Dispose();
+                }
+
+                this.DisposeConnection(connection);
+            }
+        }
+
+        /// <summary>
+        /// Deletes all jobs older than the given date.
+        /// </summary>
+        /// <param name="olderThan">The date to delete jobs older than.</param>
+        /// <param name="transaction">The transaction to execute the command in.</param>
+        public override void DeleteJobs(DateTime olderThan, IJobStoreTransaction transaction)
+        {
+            SqlJobStoreTransaction trans = transaction as SqlJobStoreTransaction;
+            DbConnection connection = null;
+            DbCommand command = null;
+
+            try
+            {
+                if (trans != null)
+                {
+                    command = this.CreateDeleteCommand(trans.Connection, olderThan);
+                    command.Transaction = trans.Transaction;
+                }
+                else
+                {
+                    connection = this.CreateAndOpenConnection();
+                    command = this.CreateDeleteCommand(connection, olderThan);
                 }
 
                 command.ExecuteNonQuery();
@@ -606,6 +667,29 @@ namespace BlueCollar
                 this.ParameterName("Id"));
 
             command.Parameters.Add(this.ParameterWithValue(this.ParameterName("Id"), id));
+            return command;
+        }
+
+        /// <summary>
+        /// Creates a delete command.
+        /// </summary>
+        /// <param name="connection">The connection to create the command with.</param>
+        /// <param name="olderThan">The date to delete records older than.</param>
+        /// <returns>A delete command.</returns>
+        protected virtual DbCommand CreateDeleteCommand(DbConnection connection, DateTime olderThan)
+        {
+            const string Sql = "DELETE FROM {0} WHERE {1} < {2};";
+
+            DbCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = string.Format(
+                CultureInfo.InvariantCulture,
+                Sql,
+                this.TableName,
+                this.ColumnName("QueueDate"),
+                this.ParameterName("OlderThan"));
+
+            command.Parameters.Add(this.ParameterWithValue(this.ParameterName("OlderThan"), olderThan));
             return command;
         }
 

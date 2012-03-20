@@ -34,6 +34,15 @@ namespace BlueCollar.Test
         }
 
         /// <summary>
+        /// Delete jobs older than tests.
+        /// </summary>
+        [TestMethod]
+        public void SQLiteJobStoreDeleteJobsOlderThan()
+        {
+            ExecuteDeleteJobsOlderThan();
+        }
+
+        /// <summary>
         /// Get jobs tests.
         /// </summary>
         [TestMethod]

@@ -69,6 +69,50 @@ namespace BlueCollar.Test
         }
 
         /// <summary>
+        /// Executes the delete jobs older than tests.
+        /// </summary>
+        protected virtual void ExecuteDeleteJobsOlderThan()
+        {
+            if (this.Store != null)
+            {
+                IJobStoreTransaction trans;
+
+                var job1 = this.CreateRecord(new TestIdJob(), JobStatus.Succeeded);
+                this.Store.SaveJob(job1);
+                
+                var job2 = this.CreateRecord(new TestIdJob(), JobStatus.Succeeded);
+                job2.QueueDate = DateTime.UtcNow.AddDays(-2);
+                this.Store.SaveJob(job2);
+
+                this.Store.DeleteJobs(DateTime.UtcNow.AddDays(-1));
+                Assert.IsNotNull(this.Store.GetJob(job1.Id.Value));
+                Assert.IsNull(this.Store.GetJob(job2.Id.Value));
+
+                job2 = this.CreateRecord(new TestIdJob(), JobStatus.Succeeded);
+                job2.QueueDate = DateTime.UtcNow.AddDays(-2);
+                this.Store.SaveJob(job2);
+
+                using (trans = this.Store.BeginTransaction())
+                {
+                    this.Store.DeleteJobs(DateTime.UtcNow.AddDays(-1), trans);
+                    trans.Rollback();
+                    Assert.IsNotNull(this.Store.GetJob(job2.Id.Value));
+                }
+
+                job2 = this.CreateRecord(new TestIdJob(), JobStatus.Succeeded);
+                job2.QueueDate = DateTime.UtcNow.AddDays(-2);
+                this.Store.SaveJob(job2);
+
+                using (trans = this.Store.BeginTransaction())
+                {
+                    this.Store.DeleteJobs(DateTime.UtcNow.AddDays(-1), trans);
+                    trans.Commit();
+                    Assert.IsNull(this.Store.GetJob(job2.Id.Value));
+                }
+            }
+        }
+
+        /// <summary>
         /// Executes the get jobs tests.
         /// </summary>
         protected virtual void ExecuteGetJobs()

@@ -46,6 +46,19 @@ namespace BlueCollar
         void DeleteJob(int id, IJobStoreTransaction transaction);
 
         /// <summary>
+        /// Deletes all jobs older than the given date.
+        /// </summary>
+        /// <param name="olderThan">The date to delete jobs older than.</param>
+        void DeleteJobs(DateTime olderThan);
+
+        /// <summary>
+        /// Deletes all jobs older than the given date.
+        /// </summary>
+        /// <param name="olderThan">The date to delete jobs older than.</param>
+        /// <param name="transaction">The transaction to execute the command in.</param>
+        void DeleteJobs(DateTime olderThan, IJobStoreTransaction transaction);
+
+        /// <summary>
         /// Gets a job by ID.
         /// </summary>
         /// <param name="id">The ID of the job to get.</param>
