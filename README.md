@@ -1,6 +1,8 @@
 # Blue Collar
 #### Background jobs + schedules for .NET
 
+**Important:** This repository is here for posterity only. The project has been superceded by one with a new architecture that is actively maintained: [Blue Collar](https://github.com/ChadBurggraf/blue-collar).
+
 Blue Collar is a database-backed background/delayed job system for .NET applications. The system is very easy to install and use, and should be able to handle most situations you throw at it.
 
 ## Installing
